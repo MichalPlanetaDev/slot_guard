@@ -11,8 +11,15 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[autocomplete='new-password']", count: 2
   end
 
-  test "creates an account and starts a session" do
-    assert_difference("User.count", 1) do
+  test "creates an account with an owned workspace and starts a session" do
+    assert_difference(
+      [
+        "User.count",
+        "Workspace.count",
+        "Membership.count"
+      ],
+      1
+    ) do
       post registration_path, params: {
         user: {
           name: "Dorothy Vaughan",
@@ -23,6 +30,10 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
+    user = User.find_by!(email_address: "dorothy@example.com")
+
+    assert_equal "Dorothy Vaughan's workspace", user.workspaces.sole.name
+    assert user.memberships.sole.owner?
     assert_redirected_to dashboard_path
 
     follow_redirect!
@@ -31,8 +42,14 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: /Welcome, Dorothy/
   end
 
-  test "renders validation errors without creating an account" do
-    assert_no_difference("User.count") do
+  test "renders validation errors without creating account data" do
+    assert_no_difference(
+      [
+        "User.count",
+        "Workspace.count",
+        "Membership.count"
+      ]
+    ) do
       post registration_path, params: {
         user: {
           name: "",

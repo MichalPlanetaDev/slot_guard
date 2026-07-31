@@ -1,6 +1,6 @@
 # SlotGuard
 
-SlotGuard is a Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources.
+SlotGuard is a Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources. Accounts belong to workspaces, where owners and managers maintain the resource inventory used by the booking domain.
 
 ## Stack
 

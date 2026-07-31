@@ -16,10 +16,11 @@ class RegistrationsController < ApplicationController
   def create
     @user = User.new(registration_params)
 
-    if @user.save
+    if create_account
       start_new_session_for @user
+
       redirect_to dashboard_path,
-        notice: "Your SlotGuard account is ready.",
+        notice: "Your SlotGuard workspace is ready.",
         status: :see_other
     else
       render :new, status: :unprocessable_entity
@@ -30,6 +31,22 @@ class RegistrationsController < ApplicationController
   end
 
   private
+
+  def create_account
+    User.transaction do
+      return false unless @user.save
+
+      workspace = Workspace.create!(
+        name: "#{@user.name}'s workspace"
+      )
+      workspace.memberships.create!(
+        user: @user,
+        role: :owner
+      )
+    end
+
+    true
+  end
 
   def registration_params
     params.expect(

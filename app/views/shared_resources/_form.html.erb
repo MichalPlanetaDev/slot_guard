@@ -1,0 +1,75 @@
+<%= render "shared/form_errors", record: shared_resource %>
+
+<%= form_with model: shared_resource, class: "space-y-6" do |form| %>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <%= form.label :name, class: "form-label" %>
+
+      <%= form.text_field :name,
+        required: true,
+        autofocus: true,
+        maxlength: 100,
+        autocomplete: "off",
+        placeholder: "Workshop projector",
+        class: "form-input" %>
+    </div>
+
+    <div>
+      <%= form.label :category, "Type", class: "form-label" %>
+
+      <%= form.select :category,
+        SharedResource.categories.keys.map { |category|
+          [category.humanize, category]
+        },
+        { include_blank: "Choose a type" },
+        required: true,
+        class: "form-input" %>
+    </div>
+
+    <div>
+      <%= form.label :capacity, class: "form-label" %>
+
+      <%= form.number_field :capacity,
+        min: 1,
+        step: 1,
+        inputmode: "numeric",
+        placeholder: "Optional",
+        class: "form-input" %>
+
+      <p class="mt-2 text-sm leading-5 text-slate-500">
+        Use the number of people or identical units this resource supports.
+      </p>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= form.label :location, class: "form-label" %>
+
+      <%= form.text_field :location,
+        maxlength: 120,
+        autocomplete: "off",
+        placeholder: "Second floor, storage room B",
+        class: "form-input" %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= form.label :description, class: "form-label" %>
+
+      <%= form.text_area :description,
+        rows: 5,
+        maxlength: 1_000,
+        placeholder: "Record the details a teammate needs before booking.",
+        class: "form-input resize-y" %>
+    </div>
+  </div>
+
+  <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
+    <%= link_to "Cancel",
+      shared_resource.persisted? ? shared_resource : shared_resources_path,
+      class: "button-secondary" %>
+
+    <%= form.submit(
+      shared_resource.persisted? ? "Save changes" : "Add resource",
+      class: "button-primary cursor-pointer"
+    ) %>
+  </div>
+<% end %>
