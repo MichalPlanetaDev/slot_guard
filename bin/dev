@@ -1,16 +1,19 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-if ! gem list foreman -i --silent; then
-  echo "Installing foreman..."
-  gem install foreman
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+MISE_BIN="${MISE_BIN:-$HOME/.local/bin/mise}"
+
+if [[ ! -x "$MISE_BIN" ]]; then
+  printf "mise not found at %s.\n" "$MISE_BIN" >&2
+  exit 1
 fi
 
-# Default to port 3000 if not specified
-export PORT="${PORT:-3000}"
+cd "$APP_DIR"
 
-# Let the debug gem allow remote connections,
-# but avoid loading until `debugger` is called
-export RUBY_DEBUG_OPEN="true"
-export RUBY_DEBUG_LAZY="true"
+if ! "$MISE_BIN" exec -- bundle check >/dev/null 2>&1; then
+  "$MISE_BIN" exec -- bundle install
+fi
 
-exec foreman start -f Procfile.dev "$@"
+exec "$MISE_BIN" exec -- \
+  bundle exec foreman start -f Procfile.dev "$@"
