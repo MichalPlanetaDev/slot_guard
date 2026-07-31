@@ -1,0 +1,79 @@
+<% content_for :title, "Create account" %>
+<% content_for :description, "Create your SlotGuard account." %>
+<% content_for :auth_heading, "Create your account" %>
+<% content_for :auth_description, "Use a work email and a strong, unique password." %>
+
+<%= render "shared/form_errors", record: @user %>
+
+<%= form_with model: @user,
+  url: registration_path,
+  class: "space-y-5" do |form| %>
+  <div>
+    <%= form.label :name, "Full name", class: "form-label" %>
+    <%= form.text_field :name,
+      required: true,
+      autofocus: true,
+      autocomplete: "name",
+      maxlength: 80,
+      placeholder: "Ada Lovelace",
+      class: "form-input" %>
+  </div>
+
+  <div>
+    <%= form.label :email_address, "Email address", class: "form-label" %>
+    <%= form.email_field :email_address,
+      required: true,
+      autocomplete: "email",
+      inputmode: "email",
+      placeholder: "ada@example.com",
+      class: "form-input" %>
+  </div>
+
+  <div data-controller="password-visibility">
+    <div class="flex items-center justify-between gap-4">
+      <%= form.label :password, class: "form-label" %>
+
+      <button
+        type="button"
+        class="mb-2 rounded text-sm font-semibold text-slate-600 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+        data-action="password-visibility#toggle"
+        data-password-visibility-target="button"
+        aria-pressed="false"
+      >
+        Show
+      </button>
+    </div>
+
+    <%= form.password_field :password,
+      required: true,
+      autocomplete: "new-password",
+      minlength: 12,
+      maxlength: 72,
+      data: { password_visibility_target: "input" },
+      class: "form-input" %>
+
+    <p class="mt-2 text-sm leading-5 text-slate-500">
+      Use at least 12 characters.
+    </p>
+
+    <%= form.label :password_confirmation,
+      "Confirm password",
+      class: "form-label mt-5" %>
+
+    <%= form.password_field :password_confirmation,
+      required: true,
+      autocomplete: "new-password",
+      minlength: 12,
+      maxlength: 72,
+      data: { password_visibility_target: "input" },
+      class: "form-input" %>
+  </div>
+
+  <%= form.submit "Create account",
+    class: "button-primary w-full cursor-pointer" %>
+<% end %>
+
+<p class="mt-6 text-center text-sm text-slate-600">
+  Already have an account?
+  <%= link_to "Sign in", new_session_path, class: "text-link" %>
+</p>

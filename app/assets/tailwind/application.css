@@ -1,1 +1,143 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans:
+    "Segoe UI",
+    "Helvetica Neue",
+    Arial,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+@layer base {
+  html {
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-width: 320px;
+  }
+
+  ::selection {
+    background: #a7f3d0;
+    color: #0f172a;
+  }
+
+  button,
+  a,
+  input {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .button-primary {
+    align-items: center;
+    background: #0f172a;
+    border-radius: 0.5rem;
+    color: white;
+    display: inline-flex;
+    font-size: 0.875rem;
+    font-weight: 600;
+    justify-content: center;
+    min-height: 3rem;
+    padding: 0.75rem 1.25rem;
+    transition:
+      background-color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .button-primary:hover {
+    background: #1e293b;
+  }
+
+  .button-primary:active {
+    transform: translateY(1px);
+  }
+
+  .button-primary:focus-visible,
+  .button-secondary:focus-visible,
+  .text-link:focus-visible,
+  .form-input:focus-visible {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
+  }
+
+  .button-secondary {
+    align-items: center;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    color: #334155;
+    display: inline-flex;
+    font-size: 0.875rem;
+    font-weight: 600;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.625rem 1rem;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .button-secondary:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+  }
+
+  .form-label {
+    color: #1e293b;
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-input {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    color: #0f172a;
+    display: block;
+    font-size: 1rem;
+    padding: 0.75rem 0.875rem;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+    width: 100%;
+  }
+
+  .form-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .form-input:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 4px #d1fae5;
+    outline: none;
+  }
+
+  .text-link {
+    color: #047857;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: #6ee7b7;
+    text-underline-offset: 0.25rem;
+  }
+
+  .text-link:hover {
+    color: #065f46;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

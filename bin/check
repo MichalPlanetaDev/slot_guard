@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if [[ -x "$HOME/.local/bin/mise" ]]; then
+  command_prefix=("$HOME/.local/bin/mise" exec --)
+else
+  command_prefix=()
+fi
+
+run_project() {
+  "${command_prefix[@]}" "$@"
+}
+
+run_project bundle exec rubocop
+run_project bundle exec brakeman --no-pager
+run_project bundle exec bundler-audit check --update
+run_project bin/importmap audit
+
+run_project env RAILS_ENV=test bin/rails db:prepare
+run_project env RAILS_ENV=test bin/rails test
+
+run_project env \
+  RAILS_ENV=production \
+  SECRET_KEY_BASE_DUMMY=1 \
+  bin/rails assets:precompile

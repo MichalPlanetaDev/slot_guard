@@ -1,0 +1,53 @@
+<% content_for :title, "Choose a new password" %>
+<% content_for :description, "Choose a new SlotGuard password." %>
+<% content_for :auth_heading, "Choose a new password" %>
+<% content_for :auth_description, "Use a unique password with at least 12 characters." %>
+
+<%= render "shared/form_errors", record: @user %>
+
+<%= form_with url: password_path(params[:token]),
+  method: :put,
+  class: "space-y-5",
+  data: { controller: "password-visibility" } do |form| %>
+  <div>
+    <div class="flex items-center justify-between gap-4">
+      <%= form.label :password, "New password", class: "form-label" %>
+
+      <button
+        type="button"
+        class="mb-2 rounded text-sm font-semibold text-slate-600 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+        data-action="password-visibility#toggle"
+        data-password-visibility-target="button"
+        aria-pressed="false"
+      >
+        Show
+      </button>
+    </div>
+
+    <%= form.password_field :password,
+      required: true,
+      autofocus: true,
+      autocomplete: "new-password",
+      minlength: 12,
+      maxlength: 72,
+      data: { password_visibility_target: "input" },
+      class: "form-input" %>
+  </div>
+
+  <div>
+    <%= form.label :password_confirmation,
+      "Confirm new password",
+      class: "form-label" %>
+
+    <%= form.password_field :password_confirmation,
+      required: true,
+      autocomplete: "new-password",
+      minlength: 12,
+      maxlength: 72,
+      data: { password_visibility_target: "input" },
+      class: "form-input" %>
+  </div>
+
+  <%= form.submit "Update password",
+    class: "button-primary w-full cursor-pointer" %>
+<% end %>

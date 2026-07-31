@@ -1,0 +1,33 @@
+<% if flash.any? %>
+  <div class="fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-3 px-4">
+    <% flash.each do |type, message| %>
+      <% alert = type.to_s == "alert" %>
+
+      <div
+        class="flex w-full max-w-lg items-start gap-3 rounded-xl border px-4 py-3 shadow-lg <%= alert ? "border-rose-200 bg-rose-50 text-rose-950" : "border-emerald-200 bg-emerald-50 text-emerald-950" %>"
+        role="<%= alert ? "alert" : "status" %>"
+        data-controller="flash"
+      >
+        <span
+          class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full <%= alert ? "bg-rose-100" : "bg-emerald-100" %>"
+          aria-hidden="true"
+        >
+          <%= alert ? "!" : "✓" %>
+        </span>
+
+        <p class="min-w-0 flex-1 text-sm font-medium leading-6">
+          <%= message %>
+        </p>
+
+        <button
+          type="button"
+          class="rounded-md p-1 opacity-60 hover:bg-black/5 hover:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2"
+          aria-label="Dismiss notification"
+          data-action="flash#dismiss"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+    <% end %>
+  </div>
+<% end %>

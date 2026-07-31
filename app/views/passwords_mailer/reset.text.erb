@@ -1,0 +1,8 @@
+Hello <%= @user.name %>,
+
+A password reset was requested for your SlotGuard account.
+The link below expires in 15 minutes.
+
+<%= edit_password_url(@user.password_reset_token) %>
+
+Ignore this message if you did not request a password reset.

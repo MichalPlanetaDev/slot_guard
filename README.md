@@ -1,32 +1,31 @@
 # SlotGuard
 
-SlotGuard is a Ruby on Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources.
+SlotGuard is a Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources.
 
 ## Stack
 
-Ruby, Rails, PostgreSQL, Hotwire, Stimulus, Tailwind CSS, Minitest, RuboCop, Brakeman, and GitHub Actions.
+Ruby, Rails, PostgreSQL, Hotwire, Stimulus, Tailwind CSS, Minitest, and GitHub Actions. Exact runtime and dependency versions are recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.
 
 ## Local setup
 
-Start PostgreSQL and prepare the application:
+Ubuntu or WSL with PostgreSQL is expected.
 
     sudo service postgresql start
-    bin/setup --skip-server
-
-Start the development server:
-
+    mise install
+    bundle install
+    bin/rails db:prepare
     bin/dev
 
-Open `http://localhost:3000`.
+Open `http://localhost:3000` and create an account through the registration screen.
+
+Development password-reset messages are written to `tmp/mail`.
 
 ## Verification
 
-Run the test suite and static checks:
+    bin/check
 
-    bin/rails test
-    bin/rubocop
-    bin/brakeman --no-pager
+The check runs style analysis, security scans, dependency audits, database preparation, tests, and a production asset compilation.
 
 ## Configuration
 
-Development uses the local PostgreSQL role matching the current WSL user. Hosted environments must provide their database connection, Rails credentials, secret key, host configuration, and mail delivery settings.
+Hosted environments must provide `DATABASE_URL`, `RAILS_MASTER_KEY`, `MAIL_FROM`, host configuration, and an Action Mailer delivery service.
