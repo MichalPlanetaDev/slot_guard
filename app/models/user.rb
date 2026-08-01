@@ -6,6 +6,12 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :memberships, dependent: :destroy
   has_many :workspaces, through: :memberships
+  has_many :reservations, dependent: :restrict_with_error
+  has_many :cancelled_reservations,
+    class_name: "Reservation",
+    foreign_key: :cancelled_by_id,
+    dependent: :restrict_with_error,
+    inverse_of: :cancelled_by
 
   normalizes :name, with: ->(name) { name.strip.squish }
   normalizes :email_address, with: ->(email) { email.strip.downcase }

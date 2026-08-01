@@ -55,4 +55,49 @@ module UserTestData
       }.merge(attributes)
     )
   end
+
+  def reservation_times(days_from_now: 2, hour: 10, duration: 1.hour)
+    date = Time.zone.today + days_from_now
+    starts_at = Time.zone.local(
+      date.year,
+      date.month,
+      date.day,
+      hour,
+      0
+    )
+
+    [ starts_at, starts_at + duration ]
+  end
+
+  def create_availability_window(
+    shared_resource:,
+    weekday:,
+    starts_minute: 9 * 60,
+    ends_minute: 17 * 60
+  )
+    AvailabilityWindow.create!(
+      shared_resource: shared_resource,
+      weekday: weekday,
+      starts_minute: starts_minute,
+      ends_minute: ends_minute
+    )
+  end
+
+  def create_reservation(
+    shared_resource:,
+    user:,
+    starts_at:,
+    ends_at:,
+    purpose: nil,
+    notes: nil
+  )
+    Reservation.create!(
+      shared_resource: shared_resource,
+      user: user,
+      starts_at: starts_at,
+      ends_at: ends_at,
+      purpose: purpose || "Reservation #{SecureRandom.hex(4)}",
+      notes: notes
+    )
+  end
 end

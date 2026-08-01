@@ -1,0 +1,96 @@
+<% content_for :title, "Reservations" %>
+<% content_for :description, "Conflict-safe reservations in your SlotGuard workspace." %>
+
+<main id="main-content" class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+  <header class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
+        <%= Current.workspace.name %>
+      </p>
+
+      <h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+        Reservations
+      </h1>
+
+      <p class="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+        Confirmed workspace bookings are protected from overlap at the database
+        boundary. Times are shown in UTC.
+      </p>
+    </div>
+
+    <%= link_to "New reservation",
+      new_reservation_path,
+      class: "button-primary shrink-0" %>
+  </header>
+
+  <nav class="mt-8 flex gap-2 overflow-x-auto border-b border-slate-200" aria-label="Reservation status">
+    <% {
+      "upcoming" => "Upcoming",
+      "past" => "Past",
+      "cancelled" => "Cancelled"
+    }.each do |status, label| %>
+      <%= link_to label,
+        reservations_path(status: status),
+        class: "whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold #{@status == status ? "border-emerald-600 text-emerald-800" : "border-transparent text-slate-500 hover:text-slate-900"}" %>
+    <% end %>
+  </nav>
+
+  <% if @reservations.any? %>
+    <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="divide-y divide-slate-200">
+        <% @reservations.each do |reservation| %>
+          <%= link_to reservation,
+            class: "block px-5 py-5 transition hover:bg-slate-50 sm:px-6" do %>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 class="font-bold text-slate-950">
+                    <%= reservation.purpose %>
+                  </h2>
+
+                  <span class="rounded-full px-2.5 py-1 text-xs font-semibold <%= reservation.confirmed? ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600" %>">
+                    <%= reservation.status.humanize %>
+                  </span>
+                </div>
+
+                <p class="mt-2 text-sm text-slate-600">
+                  <%= reservation.shared_resource.name %>
+                  ·
+                  <%= reservation.user.name %>
+                </p>
+              </div>
+
+              <div class="shrink-0 text-sm sm:text-right">
+                <p class="font-semibold text-slate-900">
+                  <%= reservation.starts_at.to_date.to_fs(:long) %>
+                </p>
+
+                <p class="mt-1 text-slate-500">
+                  <%= reservation.starts_at.to_fs(:time) %>–<%= reservation.ends_at.to_fs(:time) %>
+                  UTC
+                </p>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+  <% else %>
+    <section class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+      <h2 class="text-lg font-bold text-slate-950">
+        No <%= @status %> reservations
+      </h2>
+
+      <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+        Upcoming reservations appear here as soon as a workspace member
+        reserves an available resource.
+      </p>
+
+      <% if @status == "upcoming" %>
+        <%= link_to "Create a reservation",
+          new_reservation_path,
+          class: "button-primary mt-6" %>
+      <% end %>
+    </section>
+  <% end %>
+</main>

@@ -1,0 +1,90 @@
+<%= render "shared/form_errors", record: reservation %>
+
+<%= form_with model: reservation, class: "space-y-6" do |form| %>
+  <div>
+    <%= form.label :shared_resource_id,
+      "Resource",
+      class: "form-label" %>
+
+    <%= form.select :shared_resource_id,
+      shared_resources.map { |shared_resource|
+        [
+          [
+            shared_resource.name,
+            shared_resource.category.humanize,
+            shared_resource.location
+          ].compact_blank.join(" · "),
+          shared_resource.id
+        ]
+      },
+      {
+        prompt: "Choose a resource"
+      },
+      required: true,
+      class: "form-input" %>
+
+    <p class="mt-2 text-sm leading-5 text-slate-500">
+      A resource needs at least one availability window before it can be
+      reserved.
+    </p>
+  </div>
+
+  <div>
+    <%= form.label :purpose, class: "form-label" %>
+
+    <%= form.text_field :purpose,
+      required: true,
+      maxlength: 150,
+      autocomplete: "off",
+      placeholder: "Design review",
+      class: "form-input" %>
+  </div>
+
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <%= form.label :starts_at,
+        "Starts",
+        class: "form-label" %>
+
+      <%= form.datetime_local_field :starts_at,
+        required: true,
+        step: 900,
+        class: "form-input" %>
+    </div>
+
+    <div>
+      <%= form.label :ends_at,
+        "Ends",
+        class: "form-label" %>
+
+      <%= form.datetime_local_field :ends_at,
+        required: true,
+        step: 900,
+        class: "form-input" %>
+    </div>
+  </div>
+
+  <p class="-mt-2 text-sm leading-5 text-slate-500">
+    Enter UTC times. Reservations must stay within one booking day, last no
+    longer than 12 hours, and fit one availability window.
+  </p>
+
+  <div>
+    <%= form.label :notes, class: "form-label" %>
+
+    <%= form.text_area :notes,
+      rows: 5,
+      maxlength: 1_000,
+      placeholder: "Optional setup or access details",
+      class: "form-input resize-y" %>
+  </div>
+
+  <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
+    <%= link_to "Cancel",
+      reservations_path,
+      class: "button-secondary" %>
+
+    <%= form.submit "Confirm reservation",
+      class: "button-primary cursor-pointer" %>
+  </div>
+<% end %>

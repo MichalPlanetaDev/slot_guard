@@ -13,6 +13,16 @@ Rails.application.routes.draw do
       patch :archive
       patch :restore
     end
+
+    resources :availability_windows,
+      only: %i[create destroy]
+  end
+
+  resources :reservations,
+    only: %i[index new create show] do
+    member do
+      patch :cancel
+    end
   end
 
   root "marketing#show"

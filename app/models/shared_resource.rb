@@ -1,6 +1,11 @@
 class SharedResource < ApplicationRecord
   belongs_to :workspace
 
+  has_many :availability_windows,
+    dependent: :destroy
+  has_many :reservations,
+    dependent: :restrict_with_error
+
   enum :category,
     {
       room: "room",

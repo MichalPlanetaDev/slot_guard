@@ -1,7 +1,7 @@
 <% content_for :title, @shared_resource.name %>
-<% content_for :description, "Details for #{@shared_resource.name} in SlotGuard." %>
+<% content_for :description, "Details and availability for #{@shared_resource.name}." %>
 
-<main id="main-content" class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+<main id="main-content" class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
   <%= link_to "← Resources",
     shared_resources_path(
       status: @shared_resource.active? ? "active" : "archived"
@@ -29,8 +29,14 @@
       </p>
     </div>
 
-    <% if can_manage_resources? %>
-      <div class="flex shrink-0 flex-wrap gap-3">
+    <div class="flex shrink-0 flex-wrap gap-3">
+      <% if @shared_resource.active? %>
+        <%= link_to "Reserve",
+          new_reservation_path(resource_id: @shared_resource.id),
+          class: "button-primary" %>
+      <% end %>
+
+      <% if can_manage_resources? %>
         <%= link_to "Edit",
           edit_shared_resource_path(@shared_resource),
           class: "button-secondary" %>
@@ -42,7 +48,7 @@
             class: "inline-flex min-h-11 items-center justify-center rounded-lg border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600",
             form: {
               data: {
-                turbo_confirm: "Archive #{@shared_resource.name}? It will no longer be available for new bookings."
+                turbo_confirm: "Archive #{@shared_resource.name}? Existing reservations remain visible, but new reservations will be blocked."
               }
             } %>
         <% else %>
@@ -51,69 +57,247 @@
             method: :patch,
             class: "button-primary" %>
         <% end %>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
   </header>
 
-  <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 class="text-lg font-bold text-slate-950">
-        Resource details
-      </h2>
+  <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="space-y-6">
+      <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-950">
+          Resource details
+        </h2>
 
-      <dl class="mt-6 divide-y divide-slate-200">
-        <div class="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
-          <dt class="text-sm font-medium text-slate-500">
-            Type
-          </dt>
+        <dl class="mt-6 divide-y divide-slate-200">
+          <div class="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
+            <dt class="text-sm font-medium text-slate-500">
+              Type
+            </dt>
 
-          <dd class="text-sm font-semibold text-slate-900">
-            <%= @shared_resource.category.humanize %>
-          </dd>
-        </div>
+            <dd class="text-sm font-semibold text-slate-900">
+              <%= @shared_resource.category.humanize %>
+            </dd>
+          </div>
 
-        <div class="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
-          <dt class="text-sm font-medium text-slate-500">
-            Capacity
-          </dt>
+          <div class="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
+            <dt class="text-sm font-medium text-slate-500">
+              Capacity
+            </dt>
 
-          <dd class="text-sm font-semibold text-slate-900">
-            <%= @shared_resource.capacity || "Not specified" %>
-          </dd>
-        </div>
+            <dd class="text-sm font-semibold text-slate-900">
+              <%= @shared_resource.capacity || "Not specified" %>
+            </dd>
+          </div>
 
-        <div class="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
-          <dt class="text-sm font-medium text-slate-500">
-            Description
-          </dt>
+          <div class="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
+            <dt class="text-sm font-medium text-slate-500">
+              Description
+            </dt>
 
-          <dd class="whitespace-pre-line text-sm leading-6 text-slate-700">
-            <%= @shared_resource.description.presence || "No description recorded." %>
-          </dd>
-        </div>
-      </dl>
-    </section>
+            <dd class="whitespace-pre-line text-sm leading-6 text-slate-700">
+              <%= @shared_resource.description.presence || "No description recorded." %>
+            </dd>
+          </div>
+        </dl>
+      </section>
 
-    <aside class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-      <h2 class="text-sm font-bold text-slate-950">
-        Record history
-      </h2>
+      <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <header class="border-b border-slate-200 px-6 py-5">
+          <h2 class="text-lg font-bold text-slate-950">
+            Weekly availability
+          </h2>
 
-      <dl class="mt-4 space-y-4 text-sm">
-        <div>
-          <dt class="text-slate-500">Added</dt>
-          <dd class="mt-1 font-medium text-slate-800">
-            <%= @shared_resource.created_at.to_fs(:long) %>
-          </dd>
-        </div>
+          <p class="mt-1 text-sm leading-6 text-slate-500">
+            Reservations must fit completely inside one UTC availability
+            window.
+          </p>
+        </header>
 
-        <div>
-          <dt class="text-slate-500">Last updated</dt>
-          <dd class="mt-1 font-medium text-slate-800">
-            <%= @shared_resource.updated_at.to_fs(:long) %>
-          </dd>
-        </div>
-      </dl>
+        <% if @availability_windows.any? %>
+          <div class="divide-y divide-slate-200">
+            <% @availability_windows.each do |window| %>
+              <div class="flex items-center justify-between gap-4 px-6 py-4">
+                <div>
+                  <p class="text-sm font-semibold text-slate-950">
+                    <%= window.day_name %>
+                  </p>
+
+                  <p class="mt-1 text-sm text-slate-500">
+                    <%= window.time_range %> UTC
+                  </p>
+                </div>
+
+                <% if can_manage_resources? %>
+                  <%= button_to "Remove",
+                    shared_resource_availability_window_path(
+                      @shared_resource,
+                      window
+                    ),
+                    method: :delete,
+                    class: "text-sm font-semibold text-rose-700 hover:text-rose-900",
+                    form: {
+                      data: {
+                        turbo_confirm: "Remove this availability window? Existing reservations are not cancelled."
+                      }
+                    } %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="px-6 py-10 text-center">
+            <p class="text-sm font-semibold text-slate-900">
+              No availability configured
+            </p>
+
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+              New reservations are blocked until an owner or manager adds a
+              weekly window.
+            </p>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <header class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div>
+            <h2 class="text-lg font-bold text-slate-950">
+              Upcoming reservations
+            </h2>
+
+            <p class="mt-1 text-sm text-slate-500">
+              Confirmed reservations for this resource
+            </p>
+          </div>
+
+          <% if @shared_resource.active? %>
+            <%= link_to "Reserve",
+              new_reservation_path(resource_id: @shared_resource.id),
+              class: "text-link text-sm" %>
+          <% end %>
+        </header>
+
+        <% if @upcoming_reservations.any? %>
+          <div class="divide-y divide-slate-200">
+            <% @upcoming_reservations.each do |reservation| %>
+              <%= link_to reservation,
+                class: "block px-6 py-4 transition hover:bg-slate-50" do %>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-950">
+                      <%= reservation.purpose %>
+                    </p>
+
+                    <p class="mt-1 text-xs text-slate-500">
+                      Reserved by <%= reservation.user.name %>
+                    </p>
+                  </div>
+
+                  <p class="text-sm font-semibold text-emerald-700">
+                    <%= reservation.starts_at.to_fs(:short) %>–<%= reservation.ends_at.to_fs(:time) %>
+                    UTC
+                  </p>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="px-6 py-10 text-center text-sm text-slate-500">
+            No upcoming reservations.
+          </div>
+        <% end %>
+      </section>
+    </div>
+
+    <aside class="space-y-6">
+      <% if can_manage_resources? %>
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-sm font-bold text-slate-950">
+            Add availability
+          </h2>
+
+          <p class="mt-2 text-sm leading-6 text-slate-500">
+            Windows repeat weekly and cannot overlap.
+          </p>
+
+          <%= render "shared/form_errors",
+            record: @availability_window %>
+
+          <%= form_with model: [
+            @shared_resource,
+            @availability_window
+          ], class: "mt-5 space-y-4" do |form| %>
+            <div>
+              <%= form.label :weekday,
+                "Day",
+                class: "form-label" %>
+
+              <%= form.select :weekday,
+                Date::DAYNAMES.each_with_index.map { |name, index|
+                  [name, index]
+                },
+                {
+                  prompt: "Choose a day"
+                },
+                required: true,
+                class: "form-input" %>
+            </div>
+
+            <div>
+              <%= form.label :starts_minute,
+                "Opens",
+                class: "form-label" %>
+
+              <%= form.select :starts_minute,
+                AvailabilityWindow.start_options,
+                {
+                  prompt: "Opening time"
+                },
+                required: true,
+                class: "form-input" %>
+            </div>
+
+            <div>
+              <%= form.label :ends_minute,
+                "Closes",
+                class: "form-label" %>
+
+              <%= form.select :ends_minute,
+                AvailabilityWindow.end_options,
+                {
+                  prompt: "Closing time"
+                },
+                required: true,
+                class: "form-input" %>
+            </div>
+
+            <%= form.submit "Add window",
+              class: "button-primary w-full cursor-pointer" %>
+          <% end %>
+        </section>
+      <% end %>
+
+      <section class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <h2 class="text-sm font-bold text-slate-950">
+          Record history
+        </h2>
+
+        <dl class="mt-4 space-y-4 text-sm">
+          <div>
+            <dt class="text-slate-500">Added</dt>
+            <dd class="mt-1 font-medium text-slate-800">
+              <%= @shared_resource.created_at.to_fs(:long) %>
+            </dd>
+          </div>
+
+          <div>
+            <dt class="text-slate-500">Last updated</dt>
+            <dd class="mt-1 font-medium text-slate-800">
+              <%= @shared_resource.updated_at.to_fs(:long) %>
+            </dd>
+          </div>
+        </dl>
+      </section>
     </aside>
   </div>
 </main>

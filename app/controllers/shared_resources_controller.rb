@@ -16,6 +16,18 @@ class SharedResourcesController < WorkspaceController
   end
 
   def show
+    @availability_windows = @shared_resource
+      .availability_windows
+      .chronological
+    @availability_window = @shared_resource
+      .availability_windows
+      .new
+    @upcoming_reservations = @shared_resource
+      .reservations
+      .upcoming
+      .includes(:user)
+      .chronological
+      .limit(8)
   end
 
   def new

@@ -13,16 +13,14 @@
       </h1>
 
       <p class="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
-        Review the resources your team can reserve and keep their availability
-        in one dependable workspace.
+        Keep shared-resource availability and confirmed reservations visible
+        to the whole workspace.
       </p>
     </div>
 
-    <% if can_manage_resources? %>
-      <%= link_to "Add resource",
-        new_shared_resource_path,
-        class: "button-primary shrink-0" %>
-    <% end %>
+    <%= link_to "New reservation",
+      new_reservation_path,
+      class: "button-primary shrink-0" %>
   </header>
 
   <section class="mt-10 grid gap-5 sm:grid-cols-3" aria-label="Workspace totals">
@@ -36,7 +34,7 @@
       </p>
 
       <p class="mt-2 text-sm leading-6 text-slate-500">
-        Available for future booking rules
+        Ready for availability configuration
       </p>
     </article>
 
@@ -69,7 +67,71 @@
     </article>
   </section>
 
-  <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+  <div class="mt-6 grid gap-6 lg:grid-cols-2">
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <header class="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
+        <div>
+          <h2 class="font-bold text-slate-950">
+            Upcoming reservations
+          </h2>
+
+          <p class="mt-1 text-sm text-slate-500">
+            The next confirmed bookings in UTC
+          </p>
+        </div>
+
+        <%= link_to "View all",
+          reservations_path,
+          class: "text-link text-sm" %>
+      </header>
+
+      <% if @upcoming_reservations.any? %>
+        <div class="divide-y divide-slate-200">
+          <% @upcoming_reservations.each do |reservation| %>
+            <%= link_to reservation,
+              class: "block px-5 py-4 transition hover:bg-slate-50 sm:px-6" do %>
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-slate-950">
+                    <%= reservation.purpose %>
+                  </p>
+
+                  <p class="mt-1 truncate text-xs text-slate-500">
+                    <%= reservation.shared_resource.name %>
+                    ·
+                    <%= reservation.user.name %>
+                  </p>
+                </div>
+
+                <time
+                  datetime="<%= reservation.starts_at.iso8601 %>"
+                  class="shrink-0 text-right text-xs font-semibold text-emerald-700"
+                >
+                  <%= reservation.starts_at.to_fs(:short) %>
+                  UTC
+                </time>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
+          <h3 class="text-lg font-bold text-slate-950">
+            No upcoming reservations
+          </h3>
+
+          <p class="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+            Add availability to a resource, then reserve a time inside one of
+            its windows.
+          </p>
+
+          <%= link_to "Create a reservation",
+            new_reservation_path,
+            class: "button-primary mt-6" %>
+        </div>
+      <% end %>
+    </section>
+
     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <header class="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
         <div>
@@ -78,7 +140,7 @@
           </h2>
 
           <p class="mt-1 text-sm text-slate-500">
-            The first five resources, ordered by name
+            Rooms and equipment available to configure
           </p>
         </div>
 
@@ -112,15 +174,8 @@
           <% end %>
         </div>
       <% else %>
-        <div class="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
-          <span
-            class="flex size-14 items-center justify-center rounded-xl bg-slate-100 text-xl font-bold text-slate-500"
-            aria-hidden="true"
-          >
-            R
-          </span>
-
-          <h3 class="mt-5 text-lg font-bold text-slate-950">
+        <div class="flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center">
+          <h3 class="text-lg font-bold text-slate-950">
             No resources yet
           </h3>
 
@@ -136,36 +191,5 @@
         </div>
       <% end %>
     </section>
-
-    <aside class="rounded-2xl bg-slate-950 p-6 text-white shadow-sm">
-      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">
-        Workspace access
-      </p>
-
-      <h2 class="mt-3 text-xl font-bold">
-        Your role is <%= current_membership.role %>.
-      </h2>
-
-      <p class="mt-4 text-sm leading-6 text-slate-400">
-        <% if can_manage_resources? %>
-          You can create, edit, archive, and restore resources in this
-          workspace.
-        <% else %>
-          You can review workspace resources. An owner or manager controls
-          resource changes.
-        <% end %>
-      </p>
-
-      <div class="mt-6 border-t border-white/10 pt-6">
-        <p class="text-sm font-semibold text-white">
-          Next domain step
-        </p>
-
-        <p class="mt-2 text-sm leading-6 text-slate-400">
-          Availability windows and database-enforced reservation conflicts will
-          build on these workspace-owned resources.
-        </p>
-      </div>
-    </aside>
   </div>
 </main>
