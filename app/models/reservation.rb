@@ -1,4 +1,10 @@
 class Reservation < ApplicationRecord
+belongs_to :reservation_series,
+  optional: true,
+  inverse_of: :reservations
+
+validate :reservation_series_occurrence_is_consistent
+
   CONFLICT_MESSAGE =
     "That time is already reserved for this resource.".freeze
   MAXIMUM_DURATION = 12.hours
@@ -208,4 +214,33 @@ end
 
     errors.add(:base, CONFLICT_MESSAGE) if overlapping
   end
+private
+
+def reservation_series_occurrence_is_consistent
+  series = reservation_series
+
+  if series.present? != occurrence_number.present?
+    errors.add(
+      :occurrence_number,
+      "must be present exactly when the reservation belongs to a series"
+    )
+    return
+  end
+
+  return unless series
+
+  unless shared_resource_id == series.shared_resource_id
+    errors.add(
+      :reservation_series,
+      "must use the same resource as the reservation"
+    )
+  end
+
+  return if user_id == series.user_id
+
+  errors.add(
+    :reservation_series,
+    "must belong to the same user as the reservation"
+  )
+end
 end

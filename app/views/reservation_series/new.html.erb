@@ -1,0 +1,153 @@
+<% content_for :title, "New recurring reservation" %>
+<% content_for :description, "Create a weekly reservation series in #{Current.workspace.name}." %>
+
+<main id="main-content" class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+  <header>
+    <p class="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
+      Recurring booking
+    </p>
+
+    <h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+      New reservation series
+    </h1>
+
+    <p class="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+      Confirm a complete local-time schedule. A conflict or invalid occurrence
+      rejects the series without leaving partial reservations.
+    </p>
+  </header>
+
+  <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <%= render "shared/form_errors",
+      record: @reservation_series %>
+
+    <%= form_with model: @reservation_series,
+      url: reservation_series_collection_path,
+      method: :post,
+      class: "space-y-6" do |form| %>
+      <div>
+        <%= form.label :shared_resource_id,
+          "Resource",
+          class: "form-label" %>
+
+        <%= form.select :shared_resource_id,
+          @shared_resources.map { |shared_resource|
+            [
+              [
+                shared_resource.name,
+                shared_resource.category.humanize,
+                shared_resource.location
+              ].compact_blank.join(" · "),
+              shared_resource.id
+            ]
+          },
+          {
+            prompt: "Choose a resource"
+          },
+          required: true,
+          class: "form-input" %>
+      </div>
+
+      <div>
+        <%= form.label :purpose,
+          class: "form-label" %>
+
+        <%= form.text_field :purpose,
+          required: true,
+          maxlength: 150,
+          placeholder: "Weekly design review",
+          class: "form-input" %>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <%= form.label :first_starts_at,
+            "First occurrence starts",
+            class: "form-label" %>
+
+          <%= form.datetime_local_field :first_starts_at,
+            value: workspace_datetime_field_value(
+              @reservation_series.first_starts_at
+            ),
+            required: true,
+            step: 900,
+            class: "form-input" %>
+        </div>
+
+        <div>
+          <%= form.label :first_ends_at,
+            "First occurrence ends",
+            class: "form-label" %>
+
+          <%= form.datetime_local_field :first_ends_at,
+            value: workspace_datetime_field_value(
+              @reservation_series.first_ends_at
+            ),
+            required: true,
+            step: 900,
+            class: "form-input" %>
+        </div>
+      </div>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <%= form.label :interval_weeks,
+            "Repeat every",
+            class: "form-label" %>
+
+          <%= form.select :interval_weeks,
+            (1..ReservationSeries::MAX_INTERVAL_WEEKS).map {
+              |weeks|
+              [
+                pluralize(weeks, "week"),
+                weeks
+              ]
+            },
+            {},
+            class: "form-input" %>
+        </div>
+
+        <div>
+          <%= form.label :occurrence_count,
+            "Number of occurrences",
+            class: "form-label" %>
+
+          <%= form.number_field :occurrence_count,
+            required: true,
+            min: ReservationSeries::MIN_OCCURRENCES,
+            max: ReservationSeries::MAX_OCCURRENCES,
+            step: 1,
+            class: "form-input" %>
+        </div>
+      </div>
+
+      <p class="-mt-2 text-sm leading-6 text-slate-500">
+        Occurrences keep the same wall-clock time in
+        <strong><%= Current.workspace.time_zone %></strong>. Local times
+        skipped or repeated by a daylight-saving transition reject the series.
+      </p>
+
+      <div>
+        <%= form.label :notes,
+          class: "form-label" %>
+
+        <%= form.text_area :notes,
+          rows: 5,
+          maxlength: 1_000,
+          placeholder: "Optional setup or access details",
+          class: "form-input resize-y" %>
+      </div>
+
+      <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
+        <%= link_to "Create one reservation",
+          new_reservation_path(
+            resource_id: @reservation_series.shared_resource_id
+          ),
+          class: "button-secondary" %>
+
+        <%= form.submit "Confirm reservation series",
+          class: "button-primary cursor-pointer" %>
+      </div>
+    <% end %>
+  </section>
+</main>

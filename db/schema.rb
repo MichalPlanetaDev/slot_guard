@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_01_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -44,19 +44,46 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_150000) do
     t.check_constraint "role = ANY (ARRAY[0, 1, 2])", name: "memberships_role_value"
   end
 
+  create_table "reservation_series", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "first_ends_at", null: false
+    t.datetime "first_starts_at", null: false
+    t.integer "interval_weeks", default: 1, null: false
+    t.text "notes"
+    t.integer "occurrence_count", null: false
+    t.string "purpose", null: false
+    t.bigint "shared_resource_id", null: false
+    t.string "time_zone", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["shared_resource_id"], name: "index_reservation_series_on_shared_resource_id"
+    t.index ["user_id"], name: "index_reservation_series_on_user_id"
+    t.check_constraint "char_length(btrim(purpose::text)) >= 1 AND char_length(btrim(purpose::text)) <= 150", name: "reservation_series_purpose_length"
+    t.check_constraint "char_length(time_zone::text) >= 1 AND char_length(time_zone::text) <= 100", name: "reservation_series_time_zone_length"
+    t.check_constraint "first_ends_at <= (first_starts_at + 'PT12H'::interval)", name: "reservation_series_maximum_duration"
+    t.check_constraint "first_ends_at > first_starts_at", name: "reservation_series_positive_duration"
+    t.check_constraint "interval_weeks >= 1 AND interval_weeks <= 12", name: "reservation_series_interval_weeks"
+    t.check_constraint "notes IS NULL OR char_length(notes) <= 1000", name: "reservation_series_notes_length"
+    t.check_constraint "occurrence_count >= 2 AND occurrence_count <= 26", name: "reservation_series_occurrence_count"
+  end
+
   create_table "reservations", force: :cascade do |t|
     t.datetime "cancelled_at"
     t.bigint "cancelled_by_id"
     t.datetime "created_at", null: false
     t.datetime "ends_at", null: false
     t.text "notes"
+    t.integer "occurrence_number"
     t.string "purpose", null: false
+    t.bigint "reservation_series_id"
     t.bigint "shared_resource_id", null: false
     t.datetime "starts_at", null: false
     t.string "status", default: "confirmed", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["cancelled_by_id"], name: "index_reservations_on_cancelled_by_id"
+    t.index ["reservation_series_id", "occurrence_number"], name: "index_reservations_on_series_and_occurrence", unique: true, where: "(reservation_series_id IS NOT NULL)"
+    t.index ["reservation_series_id"], name: "index_reservations_on_reservation_series_id"
     t.index ["shared_resource_id", "starts_at"], name: "index_reservations_on_resource_and_start"
     t.index ["shared_resource_id"], name: "index_reservations_on_shared_resource_id"
     t.index ["status", "starts_at"], name: "index_reservations_on_status_and_starts_at"
@@ -66,6 +93,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_150000) do
     t.check_constraint "ends_at <= (starts_at + 'PT12H'::interval)", name: "reservations_maximum_duration"
     t.check_constraint "ends_at > starts_at", name: "reservations_positive_duration"
     t.check_constraint "notes IS NULL OR char_length(notes) <= 1000", name: "reservations_notes_length"
+    t.check_constraint "occurrence_number IS NULL OR occurrence_number >= 1 AND occurrence_number <= 26", name: "reservations_occurrence_number"
+    t.check_constraint "reservation_series_id IS NULL AND occurrence_number IS NULL OR reservation_series_id IS NOT NULL AND occurrence_number IS NOT NULL", name: "reservations_series_occurrence_pair"
     t.check_constraint "status::text = 'confirmed'::text AND cancelled_at IS NULL AND cancelled_by_id IS NULL OR status::text = 'cancelled'::text AND cancelled_at IS NOT NULL AND cancelled_by_id IS NOT NULL", name: "reservations_cancellation_state"
     t.check_constraint "status::text = ANY (ARRAY['confirmed'::character varying::text, 'cancelled'::character varying::text])", name: "reservations_status_value"
     t.exclusion_constraint "shared_resource_id WITH =, tsrange(starts_at, ends_at, '[)'::text) WITH &&", where: "(status)::text = 'confirmed'::text", using: :gist, name: "reservations_no_confirmed_overlap"
@@ -145,6 +174,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_150000) do
   add_foreign_key "availability_windows", "shared_resources"
   add_foreign_key "memberships", "users"
   add_foreign_key "memberships", "workspaces"
+  add_foreign_key "reservation_series", "shared_resources"
+  add_foreign_key "reservation_series", "users"
+  add_foreign_key "reservations", "reservation_series"
   add_foreign_key "reservations", "shared_resources"
   add_foreign_key "reservations", "users"
   add_foreign_key "reservations", "users", column: "cancelled_by_id"

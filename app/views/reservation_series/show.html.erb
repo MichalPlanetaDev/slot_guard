@@ -1,0 +1,89 @@
+<% content_for :title, @reservation_series.purpose %>
+<% content_for :description, "Reservation series for #{@reservation_series.shared_resource.name}." %>
+
+<main id="main-content" class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+  <header class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
+        Reservation series
+      </p>
+
+      <h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+        <%= @reservation_series.purpose %>
+      </h1>
+
+      <p class="mt-3 text-base leading-7 text-slate-600">
+        <%= @reservation_series.shared_resource.name %>
+        ·
+        <%= pluralize(
+          @reservation_series.occurrence_count,
+          "occurrence"
+        ) %>
+        ·
+        every
+        <%= pluralize(
+          @reservation_series.interval_weeks,
+          "week"
+        ) %>
+      </p>
+    </div>
+
+    <%= link_to "New recurring reservation",
+      new_reservation_series_path(
+        resource_id: @reservation_series.shared_resource_id
+      ),
+      class: "button-primary" %>
+  </header>
+
+  <section class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <header class="border-b border-slate-200 px-5 py-4 sm:px-6">
+      <h2 class="text-lg font-bold text-slate-950">
+        Occurrences
+      </h2>
+
+      <p class="mt-1 text-sm leading-6 text-slate-500">
+        Times are shown in <%= Current.workspace.time_zone %>. Open an
+        occurrence to cancel it alone or cancel it together with later ones.
+      </p>
+    </header>
+
+    <div class="divide-y divide-slate-200">
+      <% @reservations.each do |reservation| %>
+        <% local_start =
+          workspace_local_time(reservation.starts_at) %>
+        <% local_end =
+          workspace_local_time(reservation.ends_at) %>
+
+        <article class="flex flex-col gap-4 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="font-bold text-slate-950">
+                Occurrence <%= reservation.occurrence_number %>
+              </p>
+
+              <span class="rounded-full px-2.5 py-1 text-xs font-semibold <%= reservation.cancelled? ? "bg-rose-50 text-rose-800" : "bg-emerald-50 text-emerald-800" %>">
+                <%= reservation.cancelled? ? "Cancelled" : "Confirmed" %>
+              </span>
+            </div>
+
+            <p class="mt-2 text-sm text-slate-600">
+              <%= local_start.to_date.to_fs(:long) %>
+              ·
+              <%= local_start.to_fs(:time) %>–<%= local_end.to_fs(:time) %>
+            </p>
+
+            <% if reservation.cancelled? %>
+              <p class="mt-1 text-xs text-slate-500">
+                Cancelled by <%= reservation.cancelled_by.name %>
+              </p>
+            <% end %>
+          </div>
+
+          <%= link_to "View occurrence",
+            reservation_path(reservation),
+            class: "button-secondary" %>
+        </article>
+      <% end %>
+    </div>
+  </section>
+</main>

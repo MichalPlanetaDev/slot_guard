@@ -44,6 +44,22 @@ Rails.application.routes.draw do
       only: %i[create destroy]
   end
 
+  get "reservations/series/new",
+    to: "reservation_series#new",
+    as: :new_reservation_series
+
+  post "reservations/series",
+    to: "reservation_series#create",
+    as: :reservation_series_collection
+
+  get "reservations/series/:id",
+    to: "reservation_series#show",
+    as: :reservation_series
+
+  patch "reservations/:reservation_id/series/cancel",
+    to: "reservation_series_cancellations#create",
+    as: :cancel_reservation_series
+
   resources :reservations,
     only: %i[index new create show] do
     member do

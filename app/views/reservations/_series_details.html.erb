@@ -1,0 +1,43 @@
+<% reservation_series = reservation.reservation_series %>
+
+<section class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Reservation series
+      </p>
+
+      <h2 class="mt-2 text-lg font-bold text-slate-950">
+        Occurrence <%= reservation.occurrence_number %> of
+        <%= reservation_series.occurrence_count %>
+      </h2>
+
+      <p class="mt-2 text-sm leading-6 text-slate-600">
+        The regular cancellation on this page affects only this occurrence.
+      </p>
+    </div>
+
+    <%= link_to "View complete series",
+      reservation_series_path(reservation_series),
+      class: "button-secondary" %>
+  </div>
+
+  <% if reservation.confirmed? &&
+      reservation.starts_at > Time.current &&
+      reservation.cancellable_by?(
+        Current.user,
+        membership: current_membership
+      ) %>
+    <div class="mt-5 border-t border-slate-200 pt-5">
+      <%= button_to "Cancel this and future occurrences",
+        cancel_reservation_series_path(reservation),
+        method: :patch,
+        class: "inline-flex min-h-11 items-center justify-center rounded-lg border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50",
+        form: {
+          data: {
+            turbo_confirm: "Cancel this occurrence and every later confirmed occurrence in the series?"
+          }
+        } %>
+    </div>
+  <% end %>
+</section>

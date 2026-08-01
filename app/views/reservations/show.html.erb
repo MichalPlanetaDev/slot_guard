@@ -103,4 +103,9 @@
       <% end %>
     </dl>
   </section>
+
+<% if @reservation.reservation_series %>
+  <%= render "reservations/series_details",
+    reservation: @reservation %>
+<% end %>
 </main>

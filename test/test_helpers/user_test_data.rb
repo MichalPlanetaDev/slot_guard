@@ -122,4 +122,23 @@ module UserTestData
 
     [ invitation, invitation.delivery_token ]
   end
+def build_reservation_series(
+  shared_resource:,
+  user:,
+  first_starts_at:,
+  first_ends_at:,
+  occurrence_count: 4,
+  interval_weeks: 1,
+  purpose: "Recurring reservation"
+)
+  ReservationSeries.new(
+    shared_resource: shared_resource,
+    user: user,
+    first_starts_at: first_starts_at,
+    first_ends_at: first_ends_at,
+    occurrence_count: occurrence_count,
+    interval_weeks: interval_weeks,
+    purpose: purpose
+  )
+end
 end

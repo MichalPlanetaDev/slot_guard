@@ -1,0 +1,16 @@
+<section class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+  <h2 class="font-bold text-emerald-950">
+    Need this time more than once?
+  </h2>
+
+  <p class="mt-2 text-sm leading-6 text-emerald-900">
+    Confirm a recurring schedule while keeping each occurrence independently
+    protected against booking conflicts.
+  </p>
+
+  <%= link_to "Create a recurring reservation",
+    new_reservation_series_path(
+      resource_id: @reservation.shared_resource_id
+    ),
+    class: "mt-4 inline-flex font-semibold text-emerald-900 underline decoration-2 underline-offset-4 hover:text-emerald-700" %>
+</section>
