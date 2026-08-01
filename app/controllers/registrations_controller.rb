@@ -19,7 +19,7 @@ class RegistrationsController < ApplicationController
     if create_account
       start_new_session_for @user
 
-      redirect_to dashboard_path,
+      redirect_to after_authentication_url,
         notice: "Your SlotGuard workspace is ready.",
         status: :see_other
     else
@@ -55,7 +55,7 @@ class RegistrationsController < ApplicationController
   end
 
   def redirect_authenticated_user
-    redirect_to dashboard_path if authenticated?
+    redirect_to after_authentication_url if authenticated?
   end
 
   def redirect_after_rate_limit

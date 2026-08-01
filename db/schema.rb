@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_01_002500) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_01_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -39,6 +39,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_002500) do
     t.bigint "workspace_id", null: false
     t.index ["user_id"], name: "index_memberships_on_user_id"
     t.index ["workspace_id", "user_id"], name: "index_memberships_on_workspace_id_and_user_id", unique: true
+    t.index ["workspace_id"], name: "index_memberships_on_unique_workspace_owner", unique: true, where: "(role = 2)"
     t.index ["workspace_id"], name: "index_memberships_on_workspace_id"
     t.check_constraint "role = ANY (ARRAY[0, 1, 2])", name: "memberships_role_value"
   end
@@ -66,7 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_002500) do
     t.check_constraint "ends_at > starts_at", name: "reservations_positive_duration"
     t.check_constraint "notes IS NULL OR char_length(notes) <= 1000", name: "reservations_notes_length"
     t.check_constraint "status::text = 'confirmed'::text AND cancelled_at IS NULL AND cancelled_by_id IS NULL OR status::text = 'cancelled'::text AND cancelled_at IS NOT NULL AND cancelled_by_id IS NOT NULL", name: "reservations_cancellation_state"
-    t.check_constraint "status::text = ANY (ARRAY['confirmed'::character varying, 'cancelled'::character varying]::text[])", name: "reservations_status_value"
+    t.check_constraint "status::text = ANY (ARRAY['confirmed'::character varying::text, 'cancelled'::character varying::text])", name: "reservations_status_value"
     t.exclusion_constraint "shared_resource_id WITH =, tsrange(starts_at, ends_at, '[)'::text) WITH &&", where: "(status)::text = 'confirmed'::text", using: :gist, name: "reservations_no_confirmed_overlap"
   end
 
@@ -106,6 +107,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_002500) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  create_table "workspace_invitations", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.bigint "accepted_by_id"
+    t.datetime "created_at", null: false
+    t.string "email_address", null: false
+    t.datetime "expires_at", null: false
+    t.bigint "invited_by_id", null: false
+    t.datetime "revoked_at"
+    t.bigint "revoked_by_id"
+    t.integer "role", default: 0, null: false
+    t.string "token_digest"
+    t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
+    t.index "workspace_id, lower((email_address)::text)", name: "index_pending_invitations_on_workspace_and_email", unique: true, where: "((accepted_at IS NULL) AND (revoked_at IS NULL))"
+    t.index ["accepted_by_id"], name: "index_workspace_invitations_on_accepted_by_id"
+    t.index ["invited_by_id"], name: "index_workspace_invitations_on_invited_by_id"
+    t.index ["revoked_by_id"], name: "index_workspace_invitations_on_revoked_by_id"
+    t.index ["token_digest"], name: "index_workspace_invitations_on_token_digest", unique: true, where: "(token_digest IS NOT NULL)"
+    t.index ["workspace_id", "created_at"], name: "index_workspace_invitations_on_workspace_and_created_at"
+    t.index ["workspace_id"], name: "index_workspace_invitations_on_workspace_id"
+    t.check_constraint "accepted_at IS NULL AND accepted_by_id IS NULL AND revoked_at IS NULL AND revoked_by_id IS NULL AND token_digest IS NOT NULL OR accepted_at IS NOT NULL AND accepted_by_id IS NOT NULL AND revoked_at IS NULL AND revoked_by_id IS NULL AND token_digest IS NULL OR accepted_at IS NULL AND accepted_by_id IS NULL AND revoked_at IS NOT NULL AND revoked_by_id IS NOT NULL AND token_digest IS NULL", name: "workspace_invitations_terminal_state"
+    t.check_constraint "char_length(btrim(email_address::text)) >= 3 AND char_length(btrim(email_address::text)) <= 254", name: "workspace_invitations_email_length"
+    t.check_constraint "expires_at > created_at", name: "workspace_invitations_positive_expiration"
+    t.check_constraint "role = ANY (ARRAY[0, 1])", name: "workspace_invitations_role_value"
+  end
+
   create_table "workspaces", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -121,4 +148,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_002500) do
   add_foreign_key "reservations", "users", column: "cancelled_by_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "shared_resources", "workspaces"
+  add_foreign_key "workspace_invitations", "users", column: "accepted_by_id"
+  add_foreign_key "workspace_invitations", "users", column: "invited_by_id"
+  add_foreign_key "workspace_invitations", "users", column: "revoked_by_id"
+  add_foreign_key "workspace_invitations", "workspaces"
 end

@@ -7,6 +7,28 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
 
+  resource :current_workspace,
+    only: :update
+
+  get "workspace/team",
+    to: "workspace_team#show",
+    as: :workspace_team
+
+  resources :workspace_invitations,
+    path: "workspace/invitations",
+    only: %i[create destroy]
+
+  resources :workspace_memberships,
+    path: "workspace/memberships",
+    only: %i[update destroy]
+
+  get "join/:token",
+    to: "workspace_invitation_acceptances#show",
+    as: :workspace_invitation_acceptance
+
+  patch "join/:token",
+    to: "workspace_invitation_acceptances#update"
+
   resources :shared_resources,
     path: "resources" do
     member do

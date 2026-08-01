@@ -1,10 +1,14 @@
 # SlotGuard
 
-SlotGuard is a Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources. Workspace owners and managers maintain resources and weekly UTC availability. Members create confirmed reservations inside those windows, while PostgreSQL exclusion constraints prevent overlapping bookings for the same resource.
+SlotGuard is a Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources.
+
+Workspace owners manage invitations, roles, and member access. Managers maintain resources and weekly UTC availability. Members create confirmed reservations inside those windows. PostgreSQL exclusion constraints prevent overlapping bookings for the same resource.
+
+Each account keeps its personal workspace and can join additional workspaces through an invitation. Invitation links expire after seven days, are restricted to the invited email address, and become unusable after acceptance or revocation. SlotGuard stores only invitation-token digests.
 
 ## Stack
 
-Ruby, Rails, PostgreSQL, Hotwire, Stimulus, Tailwind CSS, Minitest, and GitHub Actions. Exact runtime and dependency versions are recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.
+Ruby, Rails, PostgreSQL, Hotwire, Stimulus, Tailwind CSS, Minitest, and GitHub Actions. Exact versions are recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.
 
 The booking schema uses PostgreSQL range expressions, GiST exclusion constraints, and the trusted `btree_gist` extension.
 
@@ -18,15 +22,13 @@ Ubuntu or WSL with PostgreSQL is expected.
     bin/rails db:prepare
     bin/dev
 
-Open `http://localhost:3000` and create an account. Add a resource, configure at least one weekly availability window, then create a reservation inside that window.
-
-Development password-reset messages are written to `tmp/mail`.
+Open `http://localhost:3000` and create an account. Development mail is written to `tmp/mail`.
 
 ## Verification
 
     bin/check
 
-The check runs style analysis, security scans, dependency audits, database preparation, tests, and a production asset compilation.
+The check runs style analysis, security scans, dependency audits, database preparation, tests, and production asset compilation.
 
 ## Configuration
 

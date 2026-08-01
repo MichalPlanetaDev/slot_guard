@@ -56,7 +56,11 @@ module UserTestData
     )
   end
 
-  def reservation_times(days_from_now: 2, hour: 10, duration: 1.hour)
+  def reservation_times(
+    days_from_now: 2,
+    hour: 10,
+    duration: 1.hour
+  )
     date = Time.zone.today + days_from_now
     starts_at = Time.zone.local(
       date.year,
@@ -96,8 +100,26 @@ module UserTestData
       user: user,
       starts_at: starts_at,
       ends_at: ends_at,
-      purpose: purpose || "Reservation #{SecureRandom.hex(4)}",
+      purpose: purpose ||
+        "Reservation #{SecureRandom.hex(4)}",
       notes: notes
     )
+  end
+
+  def create_workspace_invitation(
+    workspace:,
+    invited_by:,
+    email_address: nil,
+    role: :member
+  )
+    invitation = WorkspaceInvitation.create!(
+      workspace: workspace,
+      invited_by: invited_by,
+      email_address: email_address ||
+        "invitee-#{SecureRandom.hex(8)}@example.com",
+      role: role
+    )
+
+    [ invitation, invitation.delivery_token ]
   end
 end

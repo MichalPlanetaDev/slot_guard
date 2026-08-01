@@ -1,0 +1,9 @@
+Join <%= @workspace.name %> on SlotGuard
+
+<%= @inviter.name %> invited you to join <%= @workspace.name %> as a <%= @invitation.role %>.
+
+Review the invitation:
+<%= @acceptance_url %>
+
+This invitation expires on <%= @invitation.expires_at.to_fs(:long) %>.
+The link can be accepted only once.
