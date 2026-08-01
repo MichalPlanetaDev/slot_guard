@@ -76,7 +76,7 @@
           </h2>
 
           <p class="mt-1 text-sm text-slate-500">
-            The next confirmed bookings in UTC
+            The next confirmed bookings in <%= Current.workspace.time_zone %>
           </p>
         </div>
 
@@ -107,8 +107,8 @@
                   datetime="<%= reservation.starts_at.iso8601 %>"
                   class="shrink-0 text-right text-xs font-semibold text-emerald-700"
                 >
-                  <%= reservation.starts_at.to_fs(:short) %>
-                  UTC
+                  <%= workspace_local_time(reservation.starts_at).to_fs(:short) %>
+                  <%= Current.workspace.time_zone %>
                 </time>
               </div>
             <% end %>

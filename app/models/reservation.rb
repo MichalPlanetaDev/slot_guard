@@ -138,8 +138,8 @@ class Reservation < ApplicationRecord
     return if starts_at.blank? || ends_at.blank?
     return unless ends_at > starts_at
 
-    local_start = starts_at.in_time_zone
-    local_end = ends_at.in_time_zone
+    local_start = starts_at.in_time_zone(reservation_time_zone)
+    local_end = ends_at.in_time_zone(reservation_time_zone)
 
     same_day = local_end.to_date == local_start.to_date
     next_midnight =
@@ -150,7 +150,7 @@ class Reservation < ApplicationRecord
 
     errors.add(
       :ends_at,
-      "must be on the same UTC booking day"
+      "must be on the same local booking day"
     )
   end
 
@@ -159,8 +159,8 @@ class Reservation < ApplicationRecord
     return unless ends_at > starts_at
     return unless shared_resource&.persisted?
 
-    local_start = starts_at.in_time_zone
-    local_end = ends_at.in_time_zone
+    local_start = starts_at.in_time_zone(reservation_time_zone)
+    local_end = ends_at.in_time_zone(reservation_time_zone)
 
     available = shared_resource
       .availability_windows
@@ -176,6 +176,11 @@ class Reservation < ApplicationRecord
       )
     end
   end
+
+def reservation_time_zone
+  shared_resource&.workspace&.local_time_zone ||
+    Time.zone
+end
 
   def does_not_overlap_confirmed_reservation
     return unless confirmed?

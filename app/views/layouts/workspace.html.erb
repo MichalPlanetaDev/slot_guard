@@ -42,6 +42,8 @@
               request.path.start_with?("/workspace/team") ||
               request.path.start_with?("/workspace/memberships") ||
               request.path.start_with?("/workspace/invitations") %>
+            <% settings_active =
+              request.path.start_with?("/workspace/settings") %>
 
             <%= link_to "Dashboard",
               dashboard_path,
@@ -58,6 +60,12 @@
             <%= link_to "Team",
               workspace_team_path,
               class: "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition #{team_active ? "bg-slate-100 text-slate-950" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}" %>
+
+            <% if can_manage_members? %>
+              <%= link_to "Settings",
+                edit_workspace_settings_path,
+                class: "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition #{settings_active ? "bg-slate-100 text-slate-950" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}" %>
+            <% end %>
           </nav>
 
           <div class="flex items-center gap-3">

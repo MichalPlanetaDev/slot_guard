@@ -12,7 +12,7 @@
 
     <p class="mt-3 text-sm leading-6 text-slate-600">
       The invitation to <%= @invitation.workspace.name %> expired on
-      <%= @invitation.expires_at.to_fs(:long) %>.
+      <%= @invitation.workspace.local_time(@invitation.expires_at).to_fs(:long) %>.
       Ask the workspace owner to resend it.
     </p>
 

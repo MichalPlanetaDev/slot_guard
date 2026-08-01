@@ -30,20 +30,33 @@ class ReservationsController < WorkspaceController
     @shared_resources = available_resources
     attributes = reservation_params.to_h
     resource_id = attributes.delete("shared_resource_id")
+    submitted_starts_at = attributes.delete("starts_at")
+    submitted_ends_at = attributes.delete("ends_at")
 
     @reservation = Current.user.reservations.new(attributes)
     @reservation.shared_resource = @shared_resources.find_by(
       id: resource_id
     )
 
-    Reservations::Create.call(@reservation)
+    assign_workspace_time(
+      :starts_at,
+      submitted_starts_at
+    )
+    assign_workspace_time(
+      :ends_at,
+      submitted_ends_at
+    )
+
+    Reservations::Create.call(@reservation) if
+      @reservation.errors.empty?
 
     if @reservation.persisted?
       redirect_to @reservation,
         notice: "Reservation confirmed.",
         status: :see_other
     else
-      render :new, status: :unprocessable_entity
+      render :new,
+        status: :unprocessable_entity
     end
   end
 
@@ -108,6 +121,24 @@ class ReservationsController < WorkspaceController
     end
   end
 
+  def assign_workspace_time(attribute, submitted_value)
+    return if submitted_value.blank?
+
+    parsed_time = Current.workspace.parse_local_datetime(
+      submitted_value
+    )
+
+    @reservation.public_send(
+      :"#{attribute}=",
+      parsed_time
+    )
+  rescue Workspace::InvalidLocalTime => error
+    @reservation.errors.add(
+      attribute,
+      error.message
+    )
+  end
+
   def apply_slot_suggestion(shared_resource)
     return unless shared_resource
 
@@ -125,7 +156,9 @@ class ReservationsController < WorkspaceController
 
     return if windows.empty?
 
-    today = Time.zone.today
+    today = Current.workspace
+      .local_time(Time.current)
+      .to_date
 
     (0..14).each do |offset|
       date = today + offset
@@ -133,7 +166,11 @@ class ReservationsController < WorkspaceController
       windows
         .select { |window| window.weekday == date.wday }
         .each do |window|
-          starts_at = time_on(date, window.starts_minute)
+          starts_at = local_time_on(
+            date,
+            window.starts_minute
+          )
+          next unless starts_at
           next unless starts_at > Time.current
 
           slot_length = [
@@ -151,16 +188,10 @@ class ReservationsController < WorkspaceController
     nil
   end
 
-  def time_on(date, minute)
-    date = date.next_day if minute == 1_440
-    minute = 0 if minute == 1_440
-
-    Time.zone.local(
-      date.year,
-      date.month,
-      date.day,
-      minute / 60,
-      minute % 60
-    )
+  def local_time_on(date, minute)
+    Current.workspace.local_time_at(date, minute)
+  rescue Workspace::InvalidLocalTime
+    # A DST transition can remove or duplicate a wall-clock suggestion.
+    nil
   end
 end

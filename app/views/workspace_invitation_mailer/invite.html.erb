@@ -12,6 +12,6 @@
 
 <p>
   This invitation expires on
-  <%= @invitation.expires_at.to_fs(:long) %>.
+  <%= @workspace.local_time(@invitation.expires_at).to_fs(:long) %>.
   The link can be accepted only once.
 </p>

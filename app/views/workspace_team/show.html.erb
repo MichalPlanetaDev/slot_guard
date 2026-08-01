@@ -67,7 +67,7 @@
                 </p>
 
                 <p class="mt-1 text-xs text-slate-400">
-                  Joined <%= membership.created_at.to_date.to_fs(:long) %>
+                  Joined <%= workspace_local_time(membership.created_at).to_date.to_fs(:long) %>
                 </p>
               </div>
 
@@ -192,7 +192,7 @@
                           </span>
                         <% else %>
                           Expires
-                          <%= invitation.expires_at.to_date.to_fs(:long) %>
+                          <%= workspace_local_time(invitation.expires_at).to_date.to_fs(:long) %>
                         <% end %>
                       </p>
 

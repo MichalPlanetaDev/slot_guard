@@ -47,6 +47,9 @@
         class: "form-label" %>
 
       <%= form.datetime_local_field :starts_at,
+        value: workspace_datetime_field_value(
+          reservation.starts_at
+        ),
         required: true,
         step: 900,
         class: "form-input" %>
@@ -58,6 +61,9 @@
         class: "form-label" %>
 
       <%= form.datetime_local_field :ends_at,
+        value: workspace_datetime_field_value(
+          reservation.ends_at
+        ),
         required: true,
         step: 900,
         class: "form-input" %>
@@ -65,8 +71,10 @@
   </div>
 
   <p class="-mt-2 text-sm leading-5 text-slate-500">
-    Enter UTC times. Reservations must stay within one booking day, last no
-    longer than 12 hours, and fit one availability window.
+    Times use <strong><%= Current.workspace.time_zone %></strong>.
+    Reservations must stay within one local booking day, last no longer than
+    12 hours, and fit one availability window. Local times skipped or repeated
+    by a daylight-saving transition are rejected.
   </p>
 
   <div>

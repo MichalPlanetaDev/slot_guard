@@ -10,6 +10,10 @@ Rails.application.routes.draw do
   resource :current_workspace,
     only: :update
 
+  resource :workspace_settings,
+    path: "workspace/settings",
+    only: %i[edit update]
+
   get "workspace/team",
     to: "workspace_team#show",
     as: :workspace_team

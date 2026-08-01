@@ -108,7 +108,7 @@
           </h2>
 
           <p class="mt-1 text-sm leading-6 text-slate-500">
-            Reservations must fit completely inside one UTC availability
+            Reservations must fit completely inside one <%= Current.workspace.time_zone %> availability
             window.
           </p>
         </header>
@@ -123,7 +123,7 @@
                   </p>
 
                   <p class="mt-1 text-sm text-slate-500">
-                    <%= window.time_range %> UTC
+                    <%= window.time_range %> <%= Current.workspace.time_zone %>
                   </p>
                 </div>
 
@@ -194,8 +194,8 @@
                   </div>
 
                   <p class="text-sm font-semibold text-emerald-700">
-                    <%= reservation.starts_at.to_fs(:short) %>–<%= reservation.ends_at.to_fs(:time) %>
-                    UTC
+                    <%= workspace_local_time(reservation.starts_at).to_fs(:short) %>–<%= workspace_local_time(reservation.ends_at).to_fs(:time) %>
+                    <%= Current.workspace.time_zone %>
                   </p>
                 </div>
               <% end %>
@@ -286,14 +286,14 @@
           <div>
             <dt class="text-slate-500">Added</dt>
             <dd class="mt-1 font-medium text-slate-800">
-              <%= @shared_resource.created_at.to_fs(:long) %>
+              <%= workspace_local_time(@shared_resource.created_at).to_fs(:long) %>
             </dd>
           </div>
 
           <div>
             <dt class="text-slate-500">Last updated</dt>
             <dd class="mt-1 font-medium text-slate-800">
-              <%= @shared_resource.updated_at.to_fs(:long) %>
+              <%= workspace_local_time(@shared_resource.updated_at).to_fs(:long) %>
             </dd>
           </div>
         </dl>

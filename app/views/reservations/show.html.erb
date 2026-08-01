@@ -53,7 +53,7 @@
         </dt>
 
         <dd class="text-sm font-semibold text-slate-900">
-          <%= @reservation.starts_at.to_date.to_fs(:long) %>
+          <%= workspace_local_time(@reservation.starts_at).to_date.to_fs(:long) %>
         </dd>
       </div>
 
@@ -63,8 +63,8 @@
         </dt>
 
         <dd class="text-sm font-semibold text-slate-900">
-          <%= @reservation.starts_at.to_fs(:time) %>–<%= @reservation.ends_at.to_fs(:time) %>
-          UTC
+          <%= workspace_local_time(@reservation.starts_at).to_fs(:time) %>–<%= workspace_local_time(@reservation.ends_at).to_fs(:time) %>
+          <%= Current.workspace.time_zone %>
         </dd>
       </div>
 
@@ -95,7 +95,7 @@
           </dt>
 
           <dd class="text-sm text-slate-700">
-            <%= @reservation.cancelled_at.to_fs(:long) %>
+            <%= workspace_local_time(@reservation.cancelled_at).to_fs(:long) %>
             by
             <%= @reservation.cancelled_by.name %>
           </dd>

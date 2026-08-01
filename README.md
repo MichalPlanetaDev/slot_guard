@@ -2,7 +2,9 @@
 
 SlotGuard is a Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources.
 
-Workspace owners manage invitations, roles, and member access. Managers maintain resources and weekly UTC availability. Members create confirmed reservations inside those windows. PostgreSQL exclusion constraints prevent overlapping bookings for the same resource.
+Each workspace owns an IANA time zone. Members enter and review availability and reservations in that local time, while reservation instants remain stored in UTC. Local times skipped or repeated during daylight-saving transitions are rejected so a booking never silently moves to a different instant.
+
+Workspace owners manage identity, time zone, invitations, roles, and member access. Managers maintain resources and weekly availability. Members create confirmed reservations inside those windows. PostgreSQL exclusion constraints prevent overlapping bookings for the same resource.
 
 Each account keeps its personal workspace and can join additional workspaces through an invitation. Invitation links expire after seven days, are restricted to the invited email address, and become unusable after acceptance or revocation. SlotGuard stores only invitation-token digests.
 

@@ -5,5 +5,5 @@ Join <%= @workspace.name %> on SlotGuard
 Review the invitation:
 <%= @acceptance_url %>
 
-This invitation expires on <%= @invitation.expires_at.to_fs(:long) %>.
+This invitation expires on <%= @workspace.local_time(@invitation.expires_at).to_fs(:long) %>.
 The link can be accepted only once.

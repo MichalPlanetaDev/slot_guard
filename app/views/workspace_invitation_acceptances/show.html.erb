@@ -46,7 +46,7 @@
         </dt>
 
         <dd class="text-sm font-semibold text-slate-900">
-          <%= @invitation.expires_at.to_fs(:long) %>
+          <%= @invitation.workspace.local_time(@invitation.expires_at).to_fs(:long) %>
         </dd>
       </div>
     </dl>
