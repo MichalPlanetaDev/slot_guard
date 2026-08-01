@@ -1,0 +1,7 @@
+Reservation confirmed
+
+Your reservation for <%= @reservation.shared_resource.name %> is confirmed.
+
+<%= render "reservation_details" %>
+
+Reminder: <%= @reservation.reminder_label.downcase %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_01_212500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -44,6 +44,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
     t.check_constraint "role = ANY (ARRAY[0, 1, 2])", name: "memberships_role_value"
   end
 
+  create_table "reservation_reminders", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.bigint "reservation_id", null: false
+    t.datetime "scheduled_for", null: false
+    t.datetime "skipped_at"
+    t.datetime "updated_at", null: false
+    t.index ["reservation_id"], name: "index_reservation_reminders_on_reservation_id", unique: true
+    t.index ["scheduled_for"], name: "index_pending_reservation_reminders_on_schedule", where: "((delivered_at IS NULL) AND (skipped_at IS NULL))"
+    t.check_constraint "delivered_at IS NULL OR skipped_at IS NULL", name: "reservation_reminders_single_terminal_state"
+  end
+
   create_table "reservation_series", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "first_ends_at", null: false
@@ -52,6 +64,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
     t.text "notes"
     t.integer "occurrence_count", null: false
     t.string "purpose", null: false
+    t.integer "reminder_minutes"
     t.bigint "shared_resource_id", null: false
     t.string "time_zone", null: false
     t.datetime "updated_at", null: false
@@ -65,6 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
     t.check_constraint "interval_weeks >= 1 AND interval_weeks <= 12", name: "reservation_series_interval_weeks"
     t.check_constraint "notes IS NULL OR char_length(notes) <= 1000", name: "reservation_series_notes_length"
     t.check_constraint "occurrence_count >= 2 AND occurrence_count <= 26", name: "reservation_series_occurrence_count"
+    t.check_constraint "reminder_minutes IS NULL OR (reminder_minutes = ANY (ARRAY[60, 240, 1440, 2880]))", name: "reservation_series_reminder_minutes"
   end
 
   create_table "reservations", force: :cascade do |t|
@@ -75,6 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
     t.text "notes"
     t.integer "occurrence_number"
     t.string "purpose", null: false
+    t.integer "reminder_minutes"
     t.bigint "reservation_series_id"
     t.bigint "shared_resource_id", null: false
     t.datetime "starts_at", null: false
@@ -94,6 +109,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
     t.check_constraint "ends_at > starts_at", name: "reservations_positive_duration"
     t.check_constraint "notes IS NULL OR char_length(notes) <= 1000", name: "reservations_notes_length"
     t.check_constraint "occurrence_number IS NULL OR occurrence_number >= 1 AND occurrence_number <= 26", name: "reservations_occurrence_number"
+    t.check_constraint "reminder_minutes IS NULL OR (reminder_minutes = ANY (ARRAY[60, 240, 1440, 2880]))", name: "reservations_reminder_minutes"
     t.check_constraint "reservation_series_id IS NULL AND occurrence_number IS NULL OR reservation_series_id IS NOT NULL AND occurrence_number IS NOT NULL", name: "reservations_series_occurrence_pair"
     t.check_constraint "status::text = 'confirmed'::text AND cancelled_at IS NULL AND cancelled_by_id IS NULL OR status::text = 'cancelled'::text AND cancelled_at IS NOT NULL AND cancelled_by_id IS NOT NULL", name: "reservations_cancellation_state"
     t.check_constraint "status::text = ANY (ARRAY['confirmed'::character varying::text, 'cancelled'::character varying::text])", name: "reservations_status_value"
@@ -174,6 +190,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_195500) do
   add_foreign_key "availability_windows", "shared_resources"
   add_foreign_key "memberships", "users"
   add_foreign_key "memberships", "workspaces"
+  add_foreign_key "reservation_reminders", "reservations"
   add_foreign_key "reservation_series", "shared_resources"
   add_foreign_key "reservation_series", "users"
   add_foreign_key "reservations", "reservation_series"

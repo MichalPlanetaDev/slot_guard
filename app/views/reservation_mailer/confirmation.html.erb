@@ -1,0 +1,12 @@
+<h1>Reservation confirmed</h1>
+
+<p>
+  Your reservation for <strong><%= @reservation.shared_resource.name %></strong>
+  is confirmed.
+</p>
+
+<%= render "reservation_details" %>
+
+<p>
+  Reminder: <%= @reservation.reminder_label.downcase %>
+</p>

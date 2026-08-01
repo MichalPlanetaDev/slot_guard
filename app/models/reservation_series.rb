@@ -5,6 +5,10 @@ class ReservationSeries < ApplicationRecord
   MAX_OCCURRENCES = 26
   MAX_INTERVAL_WEEKS = 12
 
+  attribute :reminder_minutes,
+    :integer,
+    default: Reservation::DEFAULT_REMINDER_MINUTES
+
   belongs_to :shared_resource
   belongs_to :user
 
@@ -41,6 +45,11 @@ class ReservationSeries < ApplicationRecord
       greater_than_or_equal_to: MIN_OCCURRENCES,
       less_than_or_equal_to: MAX_OCCURRENCES
     }
+  validates :reminder_minutes,
+    inclusion: {
+      in: Reservation::REMINDER_MINUTES
+    },
+    allow_nil: true
 
   before_validation :capture_workspace_time_zone,
     on: :create
@@ -51,6 +60,10 @@ class ReservationSeries < ApplicationRecord
 
   def workspace
     shared_resource&.workspace
+  end
+
+  def reminder_label
+    Reservation.reminder_label(reminder_minutes)
   end
 
   def save_with_occurrences
@@ -72,7 +85,8 @@ class ReservationSeries < ApplicationRecord
           notes: notes,
           starts_at: occurrence.fetch(:starts_at),
           ends_at: occurrence.fetch(:ends_at),
-          occurrence_number: occurrence.fetch(:number)
+          occurrence_number: occurrence.fetch(:number),
+          reminder_minutes: reminder_minutes
         )
 
         Reservations::Create.call(reservation)

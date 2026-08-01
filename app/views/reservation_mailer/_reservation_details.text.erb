@@ -1,0 +1,6 @@
+<%= @reservation.purpose %>
+<%= @local_start.to_date.to_fs(:long) %>
+<%= @local_start.to_fs(:time) %>–<%= @local_end.to_fs(:time) %> <%= @workspace.time_zone %>
+
+View reservation:
+<%= @reservation_url %>

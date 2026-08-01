@@ -70,6 +70,32 @@
 
       <div class="grid gap-1 py-4 sm:grid-cols-[11rem_1fr]">
         <dt class="text-sm font-medium text-slate-500">
+          Email reminder
+        </dt>
+
+        <dd class="text-sm text-slate-700">
+          <span class="font-semibold text-slate-900">
+            <%= @reservation.reminder_label %>
+          </span>
+
+          <% if @reservation.reservation_reminder&.delivered? %>
+            · sent
+            <%= workspace_local_time(
+              @reservation.reservation_reminder.delivered_at
+            ).to_fs(:long) %>
+          <% elsif @reservation.reservation_reminder&.skipped? %>
+            · not sent
+          <% elsif @reservation.reservation_reminder %>
+            · scheduled for
+            <%= workspace_local_time(
+              @reservation.reservation_reminder.scheduled_for
+            ).to_fs(:long) %>
+          <% end %>
+        </dd>
+      </div>
+
+      <div class="grid gap-1 py-4 sm:grid-cols-[11rem_1fr]">
+        <dt class="text-sm font-medium text-slate-500">
           Reserved by
         </dt>
 
@@ -104,8 +130,8 @@
     </dl>
   </section>
 
-<% if @reservation.reservation_series %>
-  <%= render "reservations/series_details",
-    reservation: @reservation %>
-<% end %>
+  <% if @reservation.reservation_series %>
+    <%= render "reservations/series_details",
+      reservation: @reservation %>
+  <% end %>
 </main>

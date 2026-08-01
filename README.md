@@ -2,17 +2,17 @@
 
 SlotGuard is a Rails application for conflict-safe reservations of shared rooms, equipment, and other limited resources.
 
-Each workspace owns an IANA time zone. Members enter and review availability and reservations in that local time, while reservation instants remain stored in UTC. Local times skipped or repeated during daylight-saving transitions are rejected so a booking never silently moves to a different instant.
+Each workspace owns an IANA time zone. Members enter and review availability and reservations in that local time, while reservation instants remain stored in UTC. Local times skipped or repeated during daylight-saving transitions are rejected.
 
-A reservation series creates between two and twenty-six occurrences at a one-to-twelve-week interval. Every occurrence is a normal reservation protected by the existing PostgreSQL exclusion constraint. Series creation is atomic: a conflict, unavailable slot, or invalid daylight-saving time rejects the complete schedule. A member can cancel one occurrence or cancel an upcoming occurrence together with every later confirmed occurrence.
+A reservation series creates between two and twenty-six occurrences at a one-to-twelve-week interval. Every occurrence remains a normal reservation protected by PostgreSQL’s exclusion constraint. Series creation is atomic, and cancellation can affect one occurrence or the selected occurrence together with later confirmed occurrences.
 
-Workspace owners manage identity, time zone, invitations, roles, and member access. Managers maintain resources and weekly availability. Members create confirmed reservations inside those windows.
+Reservation creators receive queued confirmation and cancellation emails. Each reservation can use no reminder or a reminder one, four, twenty-four, or forty-eight hours before its start. A single database-backed reminder record coordinates scheduled delivery, suppresses duplicate jobs, and becomes skipped when its reservation is cancelled or has already started. Production delivery uses the existing Solid Queue worker configuration.
 
-Each account keeps its personal workspace and can join additional workspaces through an invitation. Invitation links expire after seven days, are restricted to the invited email address, and become unusable after acceptance or revocation. SlotGuard stores only invitation-token digests.
+Workspace owners manage identity, time zone, invitations, roles, and member access. Managers maintain resources and weekly availability. Each account keeps its personal workspace and can join additional workspaces through expiring, single-use invitation links whose raw tokens are never persisted.
 
 ## Stack
 
-Ruby, Rails, PostgreSQL, Hotwire, Stimulus, Tailwind CSS, Minitest, and GitHub Actions. Exact versions are recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.
+Ruby, Rails, PostgreSQL, Hotwire, Stimulus, Tailwind CSS, Minitest, and Solid Queue. Exact versions are recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.
 
 The booking schema uses PostgreSQL range expressions, GiST exclusion constraints, and the trusted `btree_gist` extension.
 

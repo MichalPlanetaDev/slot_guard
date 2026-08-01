@@ -78,6 +78,7 @@ class ReservationSeriesController < WorkspaceController
         first_ends_at
         interval_weeks
         occurrence_count
+        reminder_minutes
       ]
     )
   end

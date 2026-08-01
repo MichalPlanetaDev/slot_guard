@@ -93,7 +93,8 @@ module UserTestData
     starts_at:,
     ends_at:,
     purpose: nil,
-    notes: nil
+    notes: nil,
+    reminder_minutes: nil
   )
     Reservation.create!(
       shared_resource: shared_resource,
@@ -102,7 +103,8 @@ module UserTestData
       ends_at: ends_at,
       purpose: purpose ||
         "Reservation #{SecureRandom.hex(4)}",
-      notes: notes
+      notes: notes,
+      reminder_minutes: reminder_minutes
     )
   end
 
@@ -122,23 +124,26 @@ module UserTestData
 
     [ invitation, invitation.delivery_token ]
   end
-def build_reservation_series(
-  shared_resource:,
-  user:,
-  first_starts_at:,
-  first_ends_at:,
-  occurrence_count: 4,
-  interval_weeks: 1,
-  purpose: "Recurring reservation"
-)
-  ReservationSeries.new(
-    shared_resource: shared_resource,
-    user: user,
-    first_starts_at: first_starts_at,
-    first_ends_at: first_ends_at,
-    occurrence_count: occurrence_count,
-    interval_weeks: interval_weeks,
-    purpose: purpose
+
+  def build_reservation_series(
+    shared_resource:,
+    user:,
+    first_starts_at:,
+    first_ends_at:,
+    occurrence_count: 4,
+    interval_weeks: 1,
+    purpose: "Recurring reservation",
+    reminder_minutes: nil
   )
-end
+    ReservationSeries.new(
+      shared_resource: shared_resource,
+      user: user,
+      first_starts_at: first_starts_at,
+      first_ends_at: first_ends_at,
+      occurrence_count: occurrence_count,
+      interval_weeks: interval_weeks,
+      purpose: purpose,
+      reminder_minutes: reminder_minutes
+    )
+  end
 end

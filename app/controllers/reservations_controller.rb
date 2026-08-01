@@ -83,6 +83,7 @@ class ReservationsController < WorkspaceController
   def set_reservation
     @reservation = Current.workspace
       .reservations
+      .includes(:reservation_reminder)
       .find(params[:id])
   end
 
@@ -94,6 +95,7 @@ class ReservationsController < WorkspaceController
         notes
         starts_at
         ends_at
+        reminder_minutes
       ]
     )
   end

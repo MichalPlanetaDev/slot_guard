@@ -1,0 +1,8 @@
+<h1>Reservation cancelled</h1>
+
+<p>
+  The reservation for <strong><%= @reservation.shared_resource.name %></strong>
+  was cancelled by <%= @reservation.cancelled_by.name %>.
+</p>
+
+<%= render "reservation_details" %>

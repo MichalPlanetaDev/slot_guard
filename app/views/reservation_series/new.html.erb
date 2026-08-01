@@ -128,6 +128,17 @@
       </p>
 
       <div>
+        <%= form.label :reminder_minutes,
+          "Email reminder for each occurrence",
+          class: "form-label" %>
+
+        <%= form.select :reminder_minutes,
+          Reservation::REMINDER_OPTIONS,
+          {},
+          class: "form-input" %>
+      </div>
+
+      <div>
         <%= form.label :notes,
           class: "form-label" %>
 

@@ -78,6 +78,22 @@
   </p>
 
   <div>
+    <%= form.label :reminder_minutes,
+      "Email reminder",
+      class: "form-label" %>
+
+    <%= form.select :reminder_minutes,
+      Reservation::REMINDER_OPTIONS,
+      {},
+      class: "form-input" %>
+
+    <p class="mt-2 text-sm leading-5 text-slate-500">
+      When the selected lead time has already passed, the reminder is queued
+      immediately after confirmation.
+    </p>
+  </div>
+
+  <div>
     <%= form.label :notes, class: "form-label" %>
 
     <%= form.text_area :notes,
