@@ -8,6 +8,8 @@ Reservations can be created once or as a recurring series. Series creation is at
 
 Owners and managers can close individual resources for maintenance or temporary unavailability. Owners can also close the complete workspace. Timed and all-day blackout periods share the same database schedule ledger as reservations, so an overlap cannot be committed. Existing confirmed reservations must be cancelled before a conflicting blackout is added.
 
+Owners set workspace defaults for booking notice, advance booking, reservation duration, and cancellation cutoff. A resource can override any setting independently while inheriting the remaining workspace policy. Every occurrence in a recurring series is checked against the effective resource policy.
+
 ## Local setup
 
 SlotGuard expects Ruby, PostgreSQL, and the versions recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.

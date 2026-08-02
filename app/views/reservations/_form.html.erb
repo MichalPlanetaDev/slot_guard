@@ -29,6 +29,12 @@
     </p>
   </div>
 
+  <% if reservation.shared_resource %>
+    <%= render "shared/booking_policy",
+      policy: reservation.booking_policy,
+      title: "Selected resource policy" %>
+  <% end %>
+
   <div>
     <%= form.label :purpose, class: "form-label" %>
 
@@ -72,9 +78,9 @@
 
   <p class="-mt-2 text-sm leading-5 text-slate-500">
     Times use <strong><%= Current.workspace.time_zone %></strong>.
-    Reservations must stay within one local booking day, last no longer than
-    12 hours, and fit one availability window. Local times skipped or repeated
-    by a daylight-saving transition are rejected.
+    Reservations must stay within one local booking day and one availability
+    window. Local times skipped or repeated by a daylight-saving transition
+    are rejected.
   </p>
 
   <div>

@@ -1,6 +1,6 @@
 <%= render "shared/form_errors", record: shared_resource %>
 
-<%= form_with model: shared_resource, class: "space-y-6" do |form| %>
+<%= form_with model: shared_resource, class: "space-y-8" do |form| %>
   <div class="grid gap-5 sm:grid-cols-2">
     <div class="sm:col-span-2">
       <%= form.label :name, class: "form-label" %>
@@ -61,6 +61,73 @@
         class: "form-input resize-y" %>
     </div>
   </div>
+
+  <fieldset class="border-t border-slate-200 pt-8">
+    <legend class="text-lg font-bold text-slate-950">
+      Booking policy overrides
+    </legend>
+
+    <p class="mt-2 text-sm leading-6 text-slate-500">
+      Leave a field blank to inherit that individual setting from
+      <%= shared_resource.workspace.name %>.
+    </p>
+
+    <% workspace_policy = shared_resource.workspace.booking_policy %>
+
+    <div class="mt-6 grid gap-5 sm:grid-cols-2">
+      <div>
+        <%= form.label :minimum_booking_notice_minutes,
+          "Minimum notice (minutes)",
+          class: "form-label" %>
+
+        <%= form.number_field :minimum_booking_notice_minutes,
+          min: 0,
+          max: 10_080,
+          step: 15,
+          placeholder: workspace_policy.minimum_booking_notice_minutes,
+          class: "form-input" %>
+      </div>
+
+      <div>
+        <%= form.label :maximum_advance_booking_days,
+          "Maximum advance window (days)",
+          class: "form-label" %>
+
+        <%= form.number_field :maximum_advance_booking_days,
+          min: 1,
+          max: 3_650,
+          step: 1,
+          placeholder: workspace_policy.maximum_advance_booking_days,
+          class: "form-input" %>
+      </div>
+
+      <div>
+        <%= form.label :maximum_reservation_duration_minutes,
+          "Maximum duration (minutes)",
+          class: "form-label" %>
+
+        <%= form.number_field :maximum_reservation_duration_minutes,
+          min: 15,
+          max: 1_440,
+          step: 15,
+          placeholder: workspace_policy.maximum_reservation_duration_minutes,
+          class: "form-input" %>
+      </div>
+
+      <div>
+        <%= form.label :cancellation_cutoff_minutes,
+          "Cancellation cutoff (minutes)",
+          class: "form-label" %>
+
+        <%= form.number_field :cancellation_cutoff_minutes,
+          min: 0,
+          max: 10_080,
+          step: 15,
+          placeholder: workspace_policy.cancellation_cutoff_minutes,
+          class: "form-input" %>
+      </div>
+    </div>
+  </fieldset>
 
   <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
     <%= link_to "Cancel",

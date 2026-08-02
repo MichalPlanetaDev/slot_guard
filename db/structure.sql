@@ -384,7 +384,15 @@ CREATE TABLE public.shared_resources (
     active boolean DEFAULT true NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    minimum_booking_notice_minutes integer,
+    maximum_advance_booking_days integer,
+    maximum_reservation_duration_minutes integer,
+    cancellation_cutoff_minutes integer,
+    CONSTRAINT shared_resources_cancellation_cutoff_minutes_range CHECK (((cancellation_cutoff_minutes IS NULL) OR ((cancellation_cutoff_minutes >= 0) AND (cancellation_cutoff_minutes <= 10080)))),
     CONSTRAINT shared_resources_category_value CHECK (((category)::text = ANY ((ARRAY['room'::character varying, 'equipment'::character varying])::text[]))),
+    CONSTRAINT shared_resources_maximum_advance_booking_days_range CHECK (((maximum_advance_booking_days IS NULL) OR ((maximum_advance_booking_days >= 1) AND (maximum_advance_booking_days <= 3650)))),
+    CONSTRAINT shared_resources_maximum_reservation_duration_minutes_range CHECK (((maximum_reservation_duration_minutes IS NULL) OR ((maximum_reservation_duration_minutes >= 15) AND (maximum_reservation_duration_minutes <= 1440)))),
+    CONSTRAINT shared_resources_minimum_booking_notice_minutes_range CHECK (((minimum_booking_notice_minutes IS NULL) OR ((minimum_booking_notice_minutes >= 0) AND (minimum_booking_notice_minutes <= 10080)))),
     CONSTRAINT shared_resources_name_length CHECK (((char_length(btrim((name)::text)) >= 1) AND (char_length(btrim((name)::text)) <= 100))),
     CONSTRAINT shared_resources_positive_capacity CHECK (((capacity IS NULL) OR (capacity > 0)))
 );
@@ -496,6 +504,14 @@ CREATE TABLE public.workspaces (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     time_zone character varying DEFAULT 'Etc/UTC'::character varying NOT NULL,
+    minimum_booking_notice_minutes integer DEFAULT 0 NOT NULL,
+    maximum_advance_booking_days integer DEFAULT 365 NOT NULL,
+    maximum_reservation_duration_minutes integer DEFAULT 720 NOT NULL,
+    cancellation_cutoff_minutes integer DEFAULT 0 NOT NULL,
+    CONSTRAINT workspaces_cancellation_cutoff_minutes_range CHECK (((cancellation_cutoff_minutes >= 0) AND (cancellation_cutoff_minutes <= 10080))),
+    CONSTRAINT workspaces_maximum_advance_booking_days_range CHECK (((maximum_advance_booking_days >= 1) AND (maximum_advance_booking_days <= 3650))),
+    CONSTRAINT workspaces_maximum_reservation_duration_minutes_range CHECK (((maximum_reservation_duration_minutes >= 15) AND (maximum_reservation_duration_minutes <= 1440))),
+    CONSTRAINT workspaces_minimum_booking_notice_minutes_range CHECK (((minimum_booking_notice_minutes >= 0) AND (minimum_booking_notice_minutes <= 10080))),
     CONSTRAINT workspaces_name_length CHECK (((char_length(btrim((name)::text)) >= 1) AND (char_length(btrim((name)::text)) <= 100))),
     CONSTRAINT workspaces_time_zone_length CHECK (((char_length((time_zone)::text) >= 1) AND (char_length((time_zone)::text) <= 100)))
 );
@@ -1211,6 +1227,7 @@ ALTER TABLE ONLY public.schedule_blocks
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260802214000'),
 ('20260802171000'),
 ('20260801212500'),
 ('20260801195500'),

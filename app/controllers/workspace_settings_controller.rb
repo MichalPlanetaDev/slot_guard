@@ -25,6 +25,10 @@ class WorkspaceSettingsController < WorkspaceController
       workspace: %i[
         name
         time_zone
+        minimum_booking_notice_minutes
+        maximum_advance_booking_days
+        maximum_reservation_duration_minutes
+        cancellation_cutoff_minutes
       ]
     )
   end

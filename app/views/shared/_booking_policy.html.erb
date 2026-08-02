@@ -1,0 +1,35 @@
+<section class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+  <h3 class="text-sm font-bold text-slate-950">
+    <%= local_assigns.fetch(:title, "Booking policy") %>
+  </h3>
+
+  <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+    <div>
+      <dt class="text-slate-500">Minimum notice</dt>
+      <dd class="mt-1 font-semibold text-slate-900">
+        <%= policy.minimum_notice_label %>
+      </dd>
+    </div>
+
+    <div>
+      <dt class="text-slate-500">Advance window</dt>
+      <dd class="mt-1 font-semibold text-slate-900">
+        <%= policy.maximum_advance_label %>
+      </dd>
+    </div>
+
+    <div>
+      <dt class="text-slate-500">Maximum duration</dt>
+      <dd class="mt-1 font-semibold text-slate-900">
+        <%= policy.maximum_duration_label %>
+      </dd>
+    </div>
+
+    <div>
+      <dt class="text-slate-500">Cancellation cutoff</dt>
+      <dd class="mt-1 font-semibold text-slate-900">
+        <%= policy.cancellation_cutoff_label %>
+      </dd>
+    </div>
+  </dl>
+</section>

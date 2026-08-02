@@ -48,6 +48,12 @@
           class: "form-input" %>
       </div>
 
+      <% if @reservation_series.shared_resource %>
+        <%= render "shared/booking_policy",
+          policy: @reservation_series.booking_policy,
+          title: "Selected resource policy" %>
+      <% end %>
+
       <div>
         <%= form.label :purpose,
           class: "form-label" %>

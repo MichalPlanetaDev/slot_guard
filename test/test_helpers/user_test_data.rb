@@ -3,9 +3,11 @@ require "securerandom"
 module UserTestData
   TEST_PASSWORD = "test-password-123"
 
-  def create_workspace(name: nil)
+  def create_workspace(name: nil, **attributes)
     Workspace.create!(
-      name: name || "Workspace #{SecureRandom.hex(5)}"
+      {
+        name: name || "Workspace #{SecureRandom.hex(5)}"
+      }.merge(attributes)
     )
   end
 

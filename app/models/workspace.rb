@@ -43,6 +43,15 @@ class Workspace < ApplicationRecord
       maximum: 100
     }
 
+  BookingPolicy::FIELD_LIMITS.each do |attribute, range|
+    validates attribute,
+      numericality: {
+        only_integer: true,
+        greater_than_or_equal_to: range.begin,
+        less_than_or_equal_to: range.end
+      }
+  end
+
   validate :time_zone_identifier_is_valid
 
   def self.time_zone_options
@@ -58,6 +67,10 @@ class Workspace < ApplicationRecord
         [ zone.to_s, identifier ]
       end.freeze
     end
+  end
+
+  def booking_policy
+    BookingPolicy.new(workspace: self)
   end
 
   def local_time_zone

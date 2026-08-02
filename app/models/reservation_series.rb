@@ -66,6 +66,10 @@ class ReservationSeries < ApplicationRecord
     Reservation.reminder_label(reminder_minutes)
   end
 
+  def booking_policy
+    shared_resource&.booking_policy
+  end
+
   def save_with_occurrences
     errors.clear
     return false unless valid?
@@ -125,14 +129,13 @@ class ReservationSeries < ApplicationRecord
         raise ActiveRecord::Rollback
       end
 
-      unless selected_occurrence.cancellable_by?(
-        actor,
-        membership: membership
-      )
-        failure_message =
-          "You cannot cancel this reservation series."
-        raise ActiveRecord::Rollback
-      end
+      failure_message =
+        selected_occurrence.cancellation_denial_message(
+          actor,
+          membership: membership
+        )
+
+      raise ActiveRecord::Rollback if failure_message
 
       following_occurrences = reservations
         .confirmed
@@ -145,7 +148,10 @@ class ReservationSeries < ApplicationRecord
         .to_a
 
       following_occurrences.each do |reservation|
-        reservation.cancel!(actor: actor)
+        reservation.cancel!(
+          actor: actor,
+          membership: membership
+        )
       end
 
       cancelled_count = following_occurrences.length
@@ -238,6 +244,7 @@ class ReservationSeries < ApplicationRecord
 
   def duration_is_permitted
     return unless first_starts_at && first_ends_at
+    return unless booking_policy
 
     duration = first_ends_at - first_starts_at
 
@@ -246,10 +253,12 @@ class ReservationSeries < ApplicationRecord
         :first_ends_at,
         "must be after the start time"
       )
-    elsif duration > 12.hours
+    elsif duration > booking_policy.maximum_duration
       errors.add(
         :first_ends_at,
-        "must be no more than 12 hours after the start time"
+        "must be no more than " \
+          "#{booking_policy.maximum_duration_label} " \
+          "after the start time"
       )
     end
   end

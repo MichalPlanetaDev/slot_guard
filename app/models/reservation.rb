@@ -1,9 +1,11 @@
 class Reservation < ApplicationRecord
+  class CancellationNotAllowed < StandardError
+  end
+
   CONFLICT_MESSAGE =
     "That time is already reserved for this resource.".freeze
   BLACKOUT_MESSAGE =
     "That time is unavailable because of a blackout period.".freeze
-  MAXIMUM_DURATION = 12.hours
   DEFAULT_REMINDER_MINUTES = 24 * 60
   REMINDER_OPTIONS = [
     [ "No reminder", nil ],
@@ -72,6 +74,8 @@ class Reservation < ApplicationRecord
   validate :reservation_series_occurrence_is_consistent
   validate :resource_is_active, on: :create
   validate :starts_in_the_future, on: :create
+  validate :meets_minimum_booking_notice, on: :create
+  validate :within_advance_booking_window, on: :create
   validate :stays_within_one_booking_day, on: :create
   validate :fits_an_availability_window, on: :create
   validate :does_not_overlap_blackout, on: :create
@@ -109,9 +113,24 @@ class Reservation < ApplicationRecord
     self.class.reminder_label(reminder_minutes)
   end
 
-  def cancel!(actor:)
+  def booking_policy
+    shared_resource&.booking_policy
+  end
+
+  def cancel!(actor:, membership: nil)
     with_lock do
       return self if cancelled?
+
+      membership ||= shared_resource
+        .workspace
+        .memberships
+        .find_by(user_id: actor.id)
+      denial = cancellation_denial_message(
+        actor,
+        membership: membership
+      )
+
+      raise CancellationNotAllowed, denial if denial
 
       update!(
         status: :cancelled,
@@ -125,11 +144,20 @@ class Reservation < ApplicationRecord
   end
 
   def cancellable_by?(actor, membership:)
-    confirmed? &&
-      (
-        user_id == actor.id ||
-        membership&.can_manage_resources?
-      )
+    cancellation_denial_message(
+      actor,
+      membership: membership
+    ).nil?
+  end
+
+  def cancellation_denial_message(actor, membership:)
+    return "This reservation is already cancelled." unless confirmed?
+    return nil if membership&.can_manage_resources?
+    return "You cannot cancel this reservation." unless user_id == actor.id
+    return nil if booking_policy&.cancellation_open?(starts_at)
+
+    "Reservations must be cancelled " \
+      "#{booking_policy.cancellation_requirement}."
   end
 
   private
@@ -206,9 +234,16 @@ class Reservation < ApplicationRecord
   def duration_is_reasonable
     return if starts_at.blank? || ends_at.blank?
     return unless ends_at > starts_at
-    return if ends_at - starts_at <= MAXIMUM_DURATION
+    return unless booking_policy
+    return if ends_at - starts_at <=
+      booking_policy.maximum_duration
 
-    errors.add(:ends_at, "must be within 12 hours of the start time")
+    errors.add(
+      :ends_at,
+      "must be within " \
+        "#{booking_policy.maximum_duration_label} " \
+        "of the start time"
+    )
   end
 
   def cancellation_metadata_matches_status
@@ -282,6 +317,29 @@ class Reservation < ApplicationRecord
     return if starts_at > Time.current
 
     errors.add(:starts_at, "must be in the future")
+  end
+
+  def meets_minimum_booking_notice
+    return unless starts_at && booking_policy
+    return if booking_policy.minimum_booking_notice_minutes.zero?
+    return if starts_at >= booking_policy.earliest_start
+
+    errors.add(
+      :starts_at,
+      "must provide at least " \
+        "#{booking_policy.minimum_notice_label} notice"
+    )
+  end
+
+  def within_advance_booking_window
+    return unless starts_at && booking_policy
+    return if starts_at <= booking_policy.latest_start
+
+    errors.add(
+      :starts_at,
+      "must be within " \
+        "#{booking_policy.maximum_advance_label}"
+    )
   end
 
   def stays_within_one_booking_day

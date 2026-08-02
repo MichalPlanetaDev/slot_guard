@@ -41,8 +41,25 @@ class SharedResource < ApplicationRecord
     length: { maximum: 1_000 },
     allow_blank: true
 
+  BookingPolicy::FIELD_LIMITS.each do |attribute, range|
+    validates attribute,
+      numericality: {
+        only_integer: true,
+        greater_than_or_equal_to: range.begin,
+        less_than_or_equal_to: range.end
+      },
+      allow_nil: true
+  end
+
   scope :active, -> { where(active: true) }
   scope :archived, -> { where(active: false) }
+
+  def booking_policy
+    BookingPolicy.new(
+      workspace: workspace,
+      shared_resource: self
+    )
+  end
 
   def applicable_blackout_periods
     workspace.blackout_periods.applying_to(self)

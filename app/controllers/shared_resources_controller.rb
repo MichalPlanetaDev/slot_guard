@@ -107,6 +107,10 @@ class SharedResourcesController < WorkspaceController
         location
         capacity
         description
+        minimum_booking_notice_minutes
+        maximum_advance_booking_days
+        maximum_reservation_duration_minutes
+        cancellation_cutoff_minutes
       ]
     )
   end

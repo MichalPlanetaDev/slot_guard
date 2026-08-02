@@ -61,20 +61,29 @@ class ReservationsController < WorkspaceController
   end
 
   def cancel
-    unless @reservation.cancellable_by?(
+    denial = @reservation.cancellation_denial_message(
       Current.user,
       membership: current_membership
     )
+
+    if denial
       redirect_to @reservation,
-        alert: "You cannot cancel this reservation.",
+        alert: denial,
         status: :see_other
       return
     end
 
-    @reservation.cancel!(actor: Current.user)
+    @reservation.cancel!(
+      actor: Current.user,
+      membership: current_membership
+    )
 
     redirect_to @reservation,
       notice: "Reservation cancelled.",
+      status: :see_other
+  rescue Reservation::CancellationNotAllowed => error
+    redirect_to @reservation,
+      alert: error.message,
       status: :see_other
   end
 
@@ -158,6 +167,7 @@ class ReservationsController < WorkspaceController
 
     return if windows.empty?
 
+    policy = shared_resource.booking_policy
     today = Current.workspace
       .local_time(Time.current)
       .to_date
@@ -173,17 +183,23 @@ class ReservationsController < WorkspaceController
             window.starts_minute
           )
           next unless starts_at
-          next unless starts_at > Time.current
 
           slot_length = [
             60,
+            policy.maximum_reservation_duration_minutes,
             window.ends_minute - window.starts_minute
           ].min
 
-          return [
-            starts_at,
-            starts_at + slot_length.minutes
-          ]
+          candidate = Current.user.reservations.new(
+            shared_resource: shared_resource,
+            purpose: "Suggested reservation",
+            starts_at: starts_at,
+            ends_at: starts_at + slot_length.minutes,
+            reminder_minutes: nil
+          )
+
+          return [ candidate.starts_at, candidate.ends_at ] if
+            candidate.valid?
         end
     end
 
