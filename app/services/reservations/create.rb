@@ -9,18 +9,18 @@ module Reservations
     end
 
     def call
-      # Validation improves feedback; the constraint closes concurrency races.
+      # Validation improves feedback; the constraints close concurrency races.
       Reservation.transaction(requires_new: true) do
         reservation.save
       end
 
       reservation
     rescue ActiveRecord::StatementInvalid => error
-      raise unless exclusion_violation?(error)
+      raise unless PostgresConstraint.exclusion_violation?(error)
 
       reservation.errors.add(
         :base,
-        Reservation::CONFLICT_MESSAGE
+        conflict_message(error)
       )
       reservation
     end
@@ -29,15 +29,23 @@ module Reservations
 
     attr_reader :reservation
 
-    def exclusion_violation?(error)
-      cause = error.cause
+    def conflict_message(error)
+      if PostgresConstraint.name(error) ==
+          "schedule_blocks_no_overlap" &&
+          blackout_conflict?
+        Reservation::BLACKOUT_MESSAGE
+      else
+        Reservation::CONFLICT_MESSAGE
+      end
+    end
 
-      return true if cause.is_a?(PG::ExclusionViolation)
-      return false unless cause.respond_to?(:result)
-
-      cause.result.error_field(
-        PG::Result::PG_DIAG_SQLSTATE
-      ) == "23P01"
+    def blackout_conflict?
+      ScheduleBlock.blackout_conflict?(
+        workspace: reservation.shared_resource.workspace,
+        shared_resource: reservation.shared_resource,
+        starts_at: reservation.starts_at,
+        ends_at: reservation.ends_at
+      )
     end
   end
 end

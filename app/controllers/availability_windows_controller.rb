@@ -19,7 +19,7 @@ class AvailabilityWindowsController < WorkspaceController
       render_resource
     end
   rescue ActiveRecord::StatementInvalid => error
-    raise unless exclusion_violation?(error)
+    raise unless PostgresConstraint.exclusion_violation?(error)
 
     @availability_window.errors.add(
       :base,
@@ -70,6 +70,12 @@ class AvailabilityWindowsController < WorkspaceController
     @availability_windows = @shared_resource
       .availability_windows
       .chronological
+    @applicable_blackout_periods = @shared_resource
+      .applicable_blackout_periods
+      .current_and_future
+      .includes(:shared_resource, :created_by)
+      .chronological
+      .limit(8)
     @upcoming_reservations = @shared_resource
       .reservations
       .upcoming
@@ -79,16 +85,5 @@ class AvailabilityWindowsController < WorkspaceController
 
     render "shared_resources/show",
       status: :unprocessable_entity
-  end
-
-  def exclusion_violation?(error)
-    cause = error.cause
-
-    return true if cause.is_a?(PG::ExclusionViolation)
-    return false unless cause.respond_to?(:result)
-
-    cause.result.error_field(
-      PG::Result::PG_DIAG_SQLSTATE
-    ) == "23P01"
   end
 end

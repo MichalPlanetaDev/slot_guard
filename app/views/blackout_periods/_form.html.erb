@@ -1,0 +1,115 @@
+<%= render "shared/form_errors",
+  record: blackout_period %>
+
+<%= form_with model: blackout_period,
+  url: blackout_periods_path,
+  namespace: all_day ? "all_day" : "timed",
+  class: "mt-5 space-y-4" do |form| %>
+  <%= form.hidden_field :all_day,
+    value: all_day %>
+
+  <div>
+    <%= form.label :scope_value,
+      "Scope",
+      class: "form-label" %>
+
+    <% scope_options = [] %>
+    <% if can_manage_workspace_blackouts? %>
+      <% scope_options << [ "Entire workspace", "workspace" ] %>
+    <% end %>
+    <% scope_options.concat(
+      @shared_resources.map { |resource|
+        [ resource.name, "resource:#{resource.id}" ]
+      }
+    ) %>
+
+    <%= form.select :scope_value,
+      scope_options,
+      {
+        prompt: "Choose a scope"
+      },
+      required: true,
+      class: "form-input" %>
+
+    <p class="mt-2 text-sm leading-5 text-slate-500">
+      Managers can close individual resources. Only the owner can close the
+      entire workspace.
+    </p>
+  </div>
+
+  <div>
+    <%= form.label :reason,
+      class: "form-label" %>
+
+    <%= form.text_field :reason,
+      required: true,
+      maxlength: 150,
+      placeholder: all_day ?
+        "Public holiday" :
+        "Projector maintenance",
+      class: "form-input" %>
+  </div>
+
+  <% if all_day %>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <%= form.label :starts_on,
+          "First closed date",
+          class: "form-label" %>
+
+        <%= form.date_field :starts_on,
+          required: true,
+          class: "form-input" %>
+      </div>
+
+      <div>
+        <%= form.label :ends_on,
+          "Last closed date",
+          class: "form-label" %>
+
+        <%= form.date_field :ends_on,
+          required: true,
+          class: "form-input" %>
+      </div>
+    </div>
+
+    <p class="text-sm leading-5 text-slate-500">
+      Both dates are included. Local midnight boundaries use
+      <%= Current.workspace.time_zone %>.
+    </p>
+  <% else %>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <%= form.label :local_starts_at,
+          "Starts",
+          class: "form-label" %>
+
+        <%= form.datetime_local_field :local_starts_at,
+          required: true,
+          step: 900,
+          class: "form-input" %>
+      </div>
+
+      <div>
+        <%= form.label :local_ends_at,
+          "Ends",
+          class: "form-label" %>
+
+        <%= form.datetime_local_field :local_ends_at,
+          required: true,
+          step: 900,
+          class: "form-input" %>
+      </div>
+    </div>
+
+    <p class="text-sm leading-5 text-slate-500">
+      Times use <%= Current.workspace.time_zone %>. Skipped or repeated local
+      times during a clock change are rejected.
+    </p>
+  <% end %>
+
+  <%= form.submit all_day ?
+    "Add all-day closure" :
+    "Add timed blackout",
+    class: "button-primary w-full cursor-pointer" %>
+<% end %>

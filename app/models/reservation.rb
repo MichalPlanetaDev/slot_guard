@@ -1,6 +1,8 @@
 class Reservation < ApplicationRecord
   CONFLICT_MESSAGE =
     "That time is already reserved for this resource.".freeze
+  BLACKOUT_MESSAGE =
+    "That time is unavailable because of a blackout period.".freeze
   MAXIMUM_DURATION = 12.hours
   DEFAULT_REMINDER_MINUTES = 24 * 60
   REMINDER_OPTIONS = [
@@ -27,6 +29,9 @@ class Reservation < ApplicationRecord
     class_name: "User",
     optional: true
 
+  has_one :schedule_block,
+    dependent: :destroy,
+    inverse_of: :reservation
   has_one :reservation_reminder,
     dependent: :destroy
 
@@ -69,10 +74,14 @@ class Reservation < ApplicationRecord
   validate :starts_in_the_future, on: :create
   validate :stays_within_one_booking_day, on: :create
   validate :fits_an_availability_window, on: :create
+  validate :does_not_overlap_blackout, on: :create
   validate :does_not_overlap_confirmed_reservation, on: :create
 
+  after_create :create_schedule_block
   after_create :create_selected_reminder,
     if: :reminder_selected?
+  after_update :sync_schedule_block,
+    if: :schedule_block_changed?
   after_create_commit :enqueue_confirmation_email
   after_create_commit :enqueue_reminder_delivery,
     if: :reminder_selected?
@@ -124,6 +133,27 @@ class Reservation < ApplicationRecord
   end
 
   private
+
+  def create_schedule_block
+    ScheduleBlock.reserve_for!(self)
+  end
+
+  def sync_schedule_block
+    schedule_block.update!(
+      workspace: shared_resource.workspace,
+      shared_resource: shared_resource,
+      starts_at: starts_at,
+      ends_at: ends_at,
+      active: confirmed?
+    )
+  end
+
+  def schedule_block_changed?
+    saved_change_to_shared_resource_id? ||
+      saved_change_to_starts_at? ||
+      saved_change_to_ends_at? ||
+      saved_change_to_status?
+  end
 
   def reminder_selected?
     reminder_minutes.present?
@@ -302,30 +332,38 @@ class Reservation < ApplicationRecord
       Time.zone
   end
 
+  def does_not_overlap_blackout
+    return unless schedule_conflict_checkable?
+
+    return unless ScheduleBlock.blackout_conflict?(
+      workspace: shared_resource.workspace,
+      shared_resource: shared_resource,
+      starts_at: starts_at,
+      ends_at: ends_at
+    )
+
+    errors.add(:base, BLACKOUT_MESSAGE)
+  end
+
   def does_not_overlap_confirmed_reservation
     return unless confirmed?
-    return if starts_at.blank? || ends_at.blank?
-    return unless ends_at > starts_at
-    return unless shared_resource&.persisted?
+    return unless schedule_conflict_checkable?
 
-    overlapping = shared_resource
-      .reservations
-      .confirmed
-      .where.not(id: id)
-      .where(
-        <<~SQL.squish,
-          tsrange(starts_at, ends_at, '[)') &&
-          tsrange(
-            CAST(? AS timestamp),
-            CAST(? AS timestamp),
-            '[)'
-          )
-        SQL
-        starts_at,
-        ends_at
-      )
-      .exists?
+    return unless ScheduleBlock.reservation_conflict?(
+      workspace: shared_resource.workspace,
+      shared_resource: shared_resource,
+      starts_at: starts_at,
+      ends_at: ends_at,
+      excluding_reservation_id: id
+    )
 
-    errors.add(:base, CONFLICT_MESSAGE) if overlapping
+    errors.add(:base, CONFLICT_MESSAGE)
+  end
+
+  def schedule_conflict_checkable?
+    starts_at.present? &&
+      ends_at.present? &&
+      ends_at > starts_at &&
+      shared_resource&.persisted?
   end
 end

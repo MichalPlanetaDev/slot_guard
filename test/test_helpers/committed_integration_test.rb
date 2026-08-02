@@ -14,6 +14,8 @@ class CommittedIntegrationTest < ActionDispatch::IntegrationTest
     ActionMailer::Base.deliveries.clear
 
     ReservationReminder.delete_all
+    ScheduleBlock.delete_all
+    BlackoutPeriod.delete_all
     Reservation.delete_all
     ReservationSeries.delete_all
     AvailabilityWindow.delete_all

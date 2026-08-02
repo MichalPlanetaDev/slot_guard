@@ -18,6 +18,10 @@ Rails.application.routes.draw do
     to: "workspace_team#show",
     as: :workspace_team
 
+  resources :blackout_periods,
+    path: "workspace/blackouts",
+    only: %i[index create destroy]
+
   resources :workspace_invitations,
     path: "workspace/invitations",
     only: %i[create destroy]

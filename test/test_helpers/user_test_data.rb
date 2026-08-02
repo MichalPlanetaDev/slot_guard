@@ -108,6 +108,26 @@ module UserTestData
     )
   end
 
+  def create_blackout_period(
+    workspace:,
+    created_by:,
+    starts_at:,
+    ends_at:,
+    shared_resource: nil,
+    reason: "Maintenance",
+    all_day: false
+  )
+    BlackoutPeriod.create!(
+      workspace: workspace,
+      shared_resource: shared_resource,
+      created_by: created_by,
+      reason: reason,
+      starts_at: starts_at,
+      ends_at: ends_at,
+      all_day: all_day
+    )
+  end
+
   def create_workspace_invitation(
     workspace:,
     invited_by:,

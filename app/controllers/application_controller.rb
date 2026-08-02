@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
   helper_method :current_membership,
     :can_manage_resources?,
     :can_manage_members?,
+    :can_manage_workspace_blackouts?,
     :available_workspace_memberships
 
   private
@@ -51,6 +52,10 @@ class ApplicationController < ActionController::Base
 
   def can_manage_members?
     Current.membership&.can_manage_members?
+  end
+
+  def can_manage_workspace_blackouts?
+    Current.membership&.owner?
   end
 
   def available_workspace_memberships

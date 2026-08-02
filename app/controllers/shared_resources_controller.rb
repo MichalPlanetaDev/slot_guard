@@ -16,18 +16,7 @@ class SharedResourcesController < WorkspaceController
   end
 
   def show
-    @availability_windows = @shared_resource
-      .availability_windows
-      .chronological
-    @availability_window = @shared_resource
-      .availability_windows
-      .new
-    @upcoming_reservations = @shared_resource
-      .reservations
-      .upcoming
-      .includes(:user)
-      .chronological
-      .limit(8)
+    load_resource_schedule
   end
 
   def new
@@ -87,6 +76,27 @@ class SharedResourcesController < WorkspaceController
     @shared_resource = Current.workspace
       .shared_resources
       .find(params[:id])
+  end
+
+  def load_resource_schedule
+    @availability_windows = @shared_resource
+      .availability_windows
+      .chronological
+    @availability_window = @shared_resource
+      .availability_windows
+      .new
+    @applicable_blackout_periods = @shared_resource
+      .applicable_blackout_periods
+      .current_and_future
+      .includes(:shared_resource, :created_by)
+      .chronological
+      .limit(8)
+    @upcoming_reservations = @shared_resource
+      .reservations
+      .upcoming
+      .includes(:user)
+      .chronological
+      .limit(8)
   end
 
   def shared_resource_params

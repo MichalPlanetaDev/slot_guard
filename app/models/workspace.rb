@@ -25,6 +25,8 @@ class Workspace < ApplicationRecord
     dependent: :destroy
   has_many :shared_resources,
     dependent: :restrict_with_error
+  has_many :blackout_periods,
+    dependent: :restrict_with_error
   has_many :reservations,
     through: :shared_resources
 

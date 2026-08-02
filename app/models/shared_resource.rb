@@ -3,6 +3,8 @@ class SharedResource < ApplicationRecord
 
   has_many :availability_windows,
     dependent: :destroy
+  has_many :blackout_periods,
+    dependent: :restrict_with_error
   has_many :reservations,
     dependent: :restrict_with_error
 
@@ -41,4 +43,8 @@ class SharedResource < ApplicationRecord
 
   scope :active, -> { where(active: true) }
   scope :archived, -> { where(active: false) }
+
+  def applicable_blackout_periods
+    workspace.blackout_periods.applying_to(self)
+  end
 end

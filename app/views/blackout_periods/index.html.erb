@@ -1,0 +1,132 @@
+<% content_for :title, "Blackout periods" %>
+<% content_for :description, "Temporary closures for #{Current.workspace.name}." %>
+
+<main id="main-content" class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+  <%= link_to "← Resources",
+    shared_resources_path,
+    class: "text-link text-sm" %>
+
+  <header class="mt-6">
+    <p class="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
+      <%= Current.workspace.name %>
+    </p>
+
+    <h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+      Blackout periods
+    </h1>
+
+    <p class="mt-3 max-w-3xl text-base leading-7 text-slate-600">
+      Record maintenance, holidays, and temporary closures. Existing confirmed
+      reservations must be cancelled before their time can be closed.
+    </p>
+  </header>
+
+  <% if can_manage_resources? %>
+    <section class="mt-8 grid gap-6 lg:grid-cols-2" aria-label="Add blackout period">
+      <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-950">
+          Timed blackout
+        </h2>
+
+        <p class="mt-2 text-sm leading-6 text-slate-500">
+          Close a resource or the workspace for an exact local-time interval.
+        </p>
+
+        <%= render "form",
+          blackout_period: @timed_blackout_period,
+          all_day: false %>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-slate-950">
+          All-day closure
+        </h2>
+
+        <p class="mt-2 text-sm leading-6 text-slate-500">
+          Close complete local calendar days, including both selected dates.
+        </p>
+
+        <%= render "form",
+          blackout_period: @all_day_blackout_period,
+          all_day: true %>
+      </article>
+    </section>
+  <% else %>
+    <section class="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <p class="text-sm leading-6 text-slate-600">
+        Workspace owners and managers maintain blackout periods. Members can
+        review every current and upcoming closure here.
+      </p>
+    </section>
+  <% end %>
+
+  <nav class="mt-10 flex gap-2 border-b border-slate-200" aria-label="Blackout status">
+    <%= link_to "Current and upcoming",
+      blackout_periods_path(status: "upcoming"),
+      class: "border-b-2 px-3 py-3 text-sm font-semibold #{@status == "upcoming" ? "border-emerald-600 text-emerald-800" : "border-transparent text-slate-500 hover:text-slate-900"}" %>
+
+    <%= link_to "Past",
+      blackout_periods_path(status: "past"),
+      class: "border-b-2 px-3 py-3 text-sm font-semibold #{@status == "past" ? "border-emerald-600 text-emerald-800" : "border-transparent text-slate-500 hover:text-slate-900"}" %>
+  </nav>
+
+  <% if @blackout_periods.any? %>
+    <section class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-label="<%= @status.humanize %> blackout periods">
+      <div class="divide-y divide-slate-200">
+        <% @blackout_periods.each do |blackout_period| %>
+          <article class="flex flex-col gap-4 px-5 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="font-bold text-slate-950">
+                  <%= blackout_period.reason %>
+                </h2>
+
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                  <%= blackout_period.scope_label %>
+                </span>
+
+                <% if blackout_period.active_now? %>
+                  <span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-800">
+                    Closed now
+                  </span>
+                <% end %>
+              </div>
+
+              <p class="mt-2 text-sm font-medium text-slate-700">
+                <%= blackout_period_schedule(blackout_period) %>
+              </p>
+
+              <p class="mt-1 text-xs text-slate-500">
+                Added by <%= blackout_period.created_by.name %>
+              </p>
+            </div>
+
+            <% if blackout_period.workspace_wide? ?
+              can_manage_workspace_blackouts? :
+              can_manage_resources? %>
+              <%= button_to "Remove",
+                blackout_period_path(blackout_period),
+                method: :delete,
+                class: "text-sm font-semibold text-rose-700 hover:text-rose-900",
+                form: {
+                  data: {
+                    turbo_confirm: "Remove this blackout period? The time will become bookable again."
+                  }
+                } %>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+    </section>
+  <% else %>
+    <section class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+      <h2 class="text-lg font-bold text-slate-950">
+        No <%= @status == "past" ? "past" : "current or upcoming" %> blackouts
+      </h2>
+
+      <p class="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
+        Closures appear here after an owner or manager records them.
+      </p>
+    </section>
+  <% end %>
+</main>
