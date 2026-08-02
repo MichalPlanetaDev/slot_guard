@@ -10,6 +10,8 @@ Owners and managers can close individual resources for maintenance or temporary 
 
 Owners set workspace defaults for booking notice, advance booking, reservation duration, and cancellation cutoff. A resource can override any setting independently while inheriting the remaining workspace policy. Every occurrence in a recurring series is checked against the effective resource policy.
 
+Important reservation, blackout, resource, invitation, membership, and policy actions are written to an immutable workspace activity log. Owners see the complete history, managers see scheduling and resource activity, and members see events for their own reservations.
+
 ## Local setup
 
 SlotGuard expects Ruby, PostgreSQL, and the versions recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.

@@ -28,7 +28,19 @@ class SharedResourcesController < WorkspaceController
       .shared_resources
       .new(shared_resource_params)
 
-    if @shared_resource.save
+    saved = SharedResource.transaction do
+      if @shared_resource.save
+        record_resource_event!(
+          action: "resource.created",
+          message: "Added #{@shared_resource.name}."
+        )
+        true
+      else
+        false
+      end
+    end
+
+    if saved
       redirect_to @shared_resource,
         notice: "#{@shared_resource.name} was added.",
         status: :see_other
@@ -43,7 +55,25 @@ class SharedResourcesController < WorkspaceController
   end
 
   def update
-    if @shared_resource.update(shared_resource_params)
+    updated = SharedResource.transaction do
+      if @shared_resource.update(shared_resource_params)
+        fields = changed_fields(@shared_resource)
+
+        if fields.any?
+          record_resource_event!(
+            action: "resource.updated",
+            message: "Updated #{@shared_resource.name}.",
+            changed_fields: fields
+          )
+        end
+
+        true
+      else
+        false
+      end
+    end
+
+    if updated
       redirect_to @shared_resource,
         notice: "#{@shared_resource.name} was updated.",
         status: :see_other
@@ -55,7 +85,13 @@ class SharedResourcesController < WorkspaceController
   end
 
   def archive
-    @shared_resource.update!(active: false)
+    SharedResource.transaction do
+      @shared_resource.update!(active: false)
+      record_resource_event!(
+        action: "resource.archived",
+        message: "Archived #{@shared_resource.name}."
+      )
+    end
 
     redirect_to shared_resources_path(status: "archived"),
       notice: "#{@shared_resource.name} was archived.",
@@ -63,7 +99,13 @@ class SharedResourcesController < WorkspaceController
   end
 
   def restore
-    @shared_resource.update!(active: true)
+    SharedResource.transaction do
+      @shared_resource.update!(active: true)
+      record_resource_event!(
+        action: "resource.restored",
+        message: "Restored #{@shared_resource.name}."
+      )
+    end
 
     redirect_to @shared_resource,
       notice: "#{@shared_resource.name} is active again.",
@@ -113,6 +155,29 @@ class SharedResourcesController < WorkspaceController
         cancellation_cutoff_minutes
       ]
     )
+  end
+
+  def record_resource_event!(
+    action:,
+    message:,
+    changed_fields: []
+  )
+    AuditEvent.record!(
+      workspace: Current.workspace,
+      actor: Current.user,
+      action: action,
+      category: :resource,
+      subject: @shared_resource,
+      subject_name: @shared_resource.name,
+      message: message,
+      metadata: {
+        changed_fields: changed_fields
+      }
+    )
+  end
+
+  def changed_fields(record)
+    record.saved_changes.keys - %w[updated_at]
   end
 
   def require_resource_management_access

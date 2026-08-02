@@ -18,6 +18,10 @@ Rails.application.routes.draw do
     to: "workspace_team#show",
     as: :workspace_team
 
+  get "workspace/activity",
+    to: "audit_events#index",
+    as: :workspace_activity
+
   resources :blackout_periods,
     path: "workspace/blackouts",
     only: %i[index create destroy]

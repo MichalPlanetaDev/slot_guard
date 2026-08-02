@@ -27,6 +27,16 @@ class User < ApplicationRecord
     foreign_key: :revoked_by_id,
     dependent: :restrict_with_error,
     inverse_of: :revoked_by
+  has_many :authored_audit_events,
+    class_name: "AuditEvent",
+    foreign_key: :actor_id,
+    dependent: :restrict_with_error,
+    inverse_of: :actor
+  has_many :targeted_audit_events,
+    class_name: "AuditEvent",
+    foreign_key: :target_user_id,
+    dependent: :restrict_with_error,
+    inverse_of: :target_user
 
   normalizes :name, with: ->(name) { name.strip.squish }
   normalizes :email_address, with: ->(email) { email.strip.downcase }

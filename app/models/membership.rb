@@ -31,33 +31,53 @@ class Membership < ApplicationRecord
   end
 
   def change_role_to(role, by:)
-    errors.clear
+    with_lock do
+      errors.clear
 
-    unless workspace_owner?(by)
-      errors.add(
-        :base,
-        "Only the workspace owner can change member roles."
+      unless workspace_owner?(by)
+        errors.add(
+          :base,
+          "Only the workspace owner can change member roles."
+        )
+        return false
+      end
+
+      if owner?
+        errors.add(
+          :base,
+          "The workspace owner role cannot be changed."
+        )
+        return false
+      end
+
+      unless %w[member manager].include?(role.to_s)
+        errors.add(
+          :role,
+          "must be member or manager"
+        )
+        return false
+      end
+
+      previous_role = self.role
+      return false unless update(role: role)
+
+      AuditEvent.record!(
+        workspace: workspace,
+        actor: by,
+        target_user: user,
+        action: "membership.role_changed",
+        category: :administration,
+        subject: self,
+        subject_name: user.name,
+        message: "Changed #{user.name}'s role from #{previous_role} to #{self.role}.",
+        metadata: {
+          previous_role: previous_role,
+          role: self.role
+        }
       )
-      return false
-    end
 
-    if owner?
-      errors.add(
-        :base,
-        "The workspace owner role cannot be changed."
-      )
-      return false
+      true
     end
-
-    unless %w[member manager].include?(role.to_s)
-      errors.add(
-        :role,
-        "must be member or manager"
-      )
-      return false
-    end
-
-    update(role: role)
   end
 
   def remove_from_workspace(by:)
@@ -89,7 +109,25 @@ class Membership < ApplicationRecord
         return false
       end
 
+      removed_user = user
+      removed_role = role
+
       destroy!
+
+      AuditEvent.record!(
+        workspace: workspace,
+        actor: by,
+        target_user: removed_user,
+        action: "membership.removed",
+        category: :administration,
+        subject: self,
+        subject_name: removed_user.name,
+        message: "Removed #{removed_user.name} from the workspace.",
+        metadata: {
+          role: removed_role
+        }
+      )
+
       true
     end
   end

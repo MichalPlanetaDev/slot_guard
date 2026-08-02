@@ -10,7 +10,7 @@ module BlackoutPeriods
 
     def call
       BlackoutPeriod.transaction(requires_new: true) do
-        blackout_period.save
+        record_creation! if blackout_period.save
       end
 
       blackout_period
@@ -27,6 +27,32 @@ module BlackoutPeriods
     private
 
     attr_reader :blackout_period
+
+    def record_creation!
+      AuditEvent.record!(
+        workspace: blackout_period.workspace,
+        actor: blackout_period.created_by,
+        action: "blackout.created",
+        category: :scheduling,
+        subject: blackout_period,
+        subject_name: blackout_period.reason,
+        message: "Added a blackout for #{scope_description}.",
+        metadata: {
+          shared_resource_id: blackout_period.shared_resource_id,
+          all_day: blackout_period.all_day?,
+          starts_at: blackout_period.starts_at.iso8601,
+          ends_at: blackout_period.ends_at.iso8601
+        }
+      )
+    end
+
+    def scope_description
+      if blackout_period.workspace_wide?
+        "the entire workspace"
+      else
+        blackout_period.shared_resource.name
+      end
+    end
 
     def schedule_conflict?(error)
       PostgresConstraint.exclusion_violation?(error) &&

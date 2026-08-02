@@ -27,6 +27,8 @@ class Workspace < ApplicationRecord
     dependent: :restrict_with_error
   has_many :blackout_periods,
     dependent: :restrict_with_error
+  has_many :audit_events,
+    dependent: :restrict_with_error
   has_many :reservations,
     through: :shared_resources
 

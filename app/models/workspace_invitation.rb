@@ -143,6 +143,20 @@ class WorkspaceInvitation < ApplicationRecord
         accepted_by: user
       )
 
+      AuditEvent.record!(
+        workspace: workspace,
+        actor: user,
+        target_user: user,
+        action: "invitation.accepted",
+        category: :administration,
+        subject: self,
+        subject_name: user.name,
+        message: "#{user.name} joined the workspace as #{role}.",
+        metadata: {
+          role: role
+        }
+      )
+
       membership
     end
   rescue ActiveRecord::RecordNotUnique
@@ -182,6 +196,21 @@ class WorkspaceInvitation < ApplicationRecord
         revoked_at: Time.current,
         revoked_by: user
       )
+
+      AuditEvent.record!(
+        workspace: workspace,
+        actor: user,
+        action: "invitation.revoked",
+        category: :administration,
+        subject: self,
+        subject_name: email_address,
+        message: "Revoked the invitation for #{email_address}.",
+        metadata: {
+          role: role
+        }
+      )
+
+      true
     end
   end
 

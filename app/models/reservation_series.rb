@@ -102,6 +102,7 @@ class ReservationSeries < ApplicationRecord
         raise ActiveRecord::Rollback
       end
 
+      record_creation_audit!
       committed = true
     end
 
@@ -150,11 +151,17 @@ class ReservationSeries < ApplicationRecord
       following_occurrences.each do |reservation|
         reservation.cancel!(
           actor: actor,
-          membership: membership
+          membership: membership,
+          audit: false
         )
       end
 
       cancelled_count = following_occurrences.length
+      record_cancellation_audit!(
+        actor: actor,
+        selected_occurrence: selected_occurrence,
+        cancelled_count: cancelled_count
+      )
     end
 
     errors.add(:base, failure_message) if failure_message
@@ -168,6 +175,47 @@ class ReservationSeries < ApplicationRecord
   end
 
   private
+
+  def record_creation_audit!
+    AuditEvent.record!(
+      workspace: workspace,
+      actor: user,
+      target_user: user,
+      action: "reservation_series.created",
+      category: :reservation,
+      subject: self,
+      subject_name: purpose,
+      message: "Created #{occurrence_count} recurring reservations for #{shared_resource.name}.",
+      metadata: {
+        shared_resource_id: shared_resource_id,
+        occurrence_count: occurrence_count,
+        interval_weeks: interval_weeks
+      }
+    )
+  end
+
+  def record_cancellation_audit!(
+    actor:,
+    selected_occurrence:,
+    cancelled_count:
+  )
+    AuditEvent.record!(
+      workspace: workspace,
+      actor: actor,
+      target_user: user,
+      action: "reservation_series.cancelled",
+      category: :reservation,
+      subject: self,
+      subject_name: purpose,
+      message: "Cancelled #{cancelled_count} recurring reservations for #{shared_resource.name}.",
+      metadata: {
+        shared_resource_id: shared_resource_id,
+        cancelled_count: cancelled_count,
+        first_occurrence_number:
+          selected_occurrence.occurrence_number
+      }
+    )
+  end
 
   def capture_workspace_time_zone
     self.time_zone = workspace.time_zone if workspace

@@ -17,13 +17,34 @@ class WorkspaceInvitationsController < WorkspaceController
     )
     invitation.rotate_delivery_token
 
-    if invitation.save
-      # Synchronous delivery keeps the raw token out of persisted job payloads.
-      WorkspaceInvitationMailer.with(
-        invitation: invitation,
-        token: invitation.delivery_token
-      ).invite.deliver_now
+    saved = WorkspaceInvitation.transaction do
+      if invitation.save
+        # Synchronous delivery keeps the raw token out of persisted job payloads.
+        WorkspaceInvitationMailer.with(
+          invitation: invitation,
+          token: invitation.delivery_token
+        ).invite.deliver_now
 
+        AuditEvent.record!(
+          workspace: Current.workspace,
+          actor: Current.user,
+          action: "invitation.sent",
+          category: :administration,
+          subject: invitation,
+          subject_name: invitation.email_address,
+          message: "Invited #{invitation.email_address} as #{invitation.role}.",
+          metadata: {
+            role: invitation.role
+          }
+        )
+
+        true
+      else
+        false
+      end
+    end
+
+    if saved
       redirect_to workspace_team_path,
         notice: "Invitation sent to #{invitation.email_address}.",
         status: :see_other

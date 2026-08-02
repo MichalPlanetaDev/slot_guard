@@ -117,7 +117,7 @@ class Reservation < ApplicationRecord
     shared_resource&.booking_policy
   end
 
-  def cancel!(actor:, membership: nil)
+  def cancel!(actor:, membership: nil, audit: true)
     with_lock do
       return self if cancelled?
 
@@ -138,6 +138,7 @@ class Reservation < ApplicationRecord
         cancelled_by: actor
       )
       reservation_reminder&.skip!
+      record_cancellation_audit! if audit
 
       self
     end
@@ -161,6 +162,24 @@ class Reservation < ApplicationRecord
   end
 
   private
+
+  def record_cancellation_audit!
+    AuditEvent.record!(
+      workspace: shared_resource.workspace,
+      actor: cancelled_by,
+      target_user: user,
+      action: "reservation.cancelled",
+      category: :reservation,
+      subject: self,
+      subject_name: purpose,
+      message: "Cancelled a reservation for #{shared_resource.name}.",
+      metadata: {
+        shared_resource_id: shared_resource_id,
+        starts_at: starts_at.iso8601,
+        ends_at: ends_at.iso8601
+      }
+    )
+  end
 
   def create_schedule_block
     ScheduleBlock.reserve_for!(self)

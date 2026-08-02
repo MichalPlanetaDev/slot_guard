@@ -8,7 +8,32 @@ class WorkspaceSettingsController < WorkspaceController
   def update
     @workspace = Current.workspace
 
-    if @workspace.update(workspace_params)
+    updated = Workspace.transaction do
+      if @workspace.update(workspace_params)
+        fields = @workspace.saved_changes.keys - %w[updated_at]
+
+        if fields.any?
+          AuditEvent.record!(
+            workspace: @workspace,
+            actor: Current.user,
+            action: "workspace.updated",
+            category: :administration,
+            subject: @workspace,
+            subject_name: @workspace.name,
+            message: "Updated workspace settings.",
+            metadata: {
+              changed_fields: fields
+            }
+          )
+        end
+
+        true
+      else
+        false
+      end
+    end
+
+    if updated
       redirect_to edit_workspace_settings_path,
         notice: "Workspace settings were updated.",
         status: :see_other

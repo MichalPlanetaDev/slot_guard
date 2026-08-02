@@ -68,7 +68,32 @@ class BlackoutPeriodsController < WorkspaceController
       return
     end
 
-    @blackout_period.destroy!
+    scope_description = if @blackout_period.workspace_wide?
+      "the entire workspace"
+    else
+      @blackout_period.shared_resource.name
+    end
+
+    BlackoutPeriod.transaction do
+      @blackout_period.destroy!
+
+      AuditEvent.record!(
+        workspace: Current.workspace,
+        actor: Current.user,
+        action: "blackout.removed",
+        category: :scheduling,
+        subject: @blackout_period,
+        subject_name: @blackout_period.reason,
+        message: "Removed a blackout for #{scope_description}.",
+        metadata: {
+          shared_resource_id:
+            @blackout_period.shared_resource_id,
+          all_day: @blackout_period.all_day?,
+          starts_at: @blackout_period.starts_at.iso8601,
+          ends_at: @blackout_period.ends_at.iso8601
+        }
+      )
+    end
 
     redirect_to blackout_periods_path,
       notice: "Blackout period was removed.",

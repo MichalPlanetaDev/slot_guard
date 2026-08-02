@@ -24,6 +24,20 @@ CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
 COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiST';
 
 
+--
+-- Name: prevent_audit_event_mutation(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.prevent_audit_event_mutation() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  RAISE EXCEPTION 'audit events are immutable'
+    USING ERRCODE = '55000';
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -38,6 +52,53 @@ CREATE TABLE public.ar_internal_metadata (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
+
+
+--
+-- Name: audit_events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_events (
+    id bigint NOT NULL,
+    workspace_id bigint NOT NULL,
+    actor_id bigint NOT NULL,
+    target_user_id bigint,
+    category character varying NOT NULL,
+    action character varying NOT NULL,
+    subject_type character varying NOT NULL,
+    subject_id bigint NOT NULL,
+    subject_name character varying NOT NULL,
+    actor_name character varying NOT NULL,
+    message character varying NOT NULL,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT audit_events_action_length CHECK (((char_length((action)::text) >= 1) AND (char_length((action)::text) <= 100))),
+    CONSTRAINT audit_events_actor_name_length CHECK (((char_length((actor_name)::text) >= 1) AND (char_length((actor_name)::text) <= 80))),
+    CONSTRAINT audit_events_category CHECK (((category)::text = ANY ((ARRAY['reservation'::character varying, 'scheduling'::character varying, 'resource'::character varying, 'administration'::character varying])::text[]))),
+    CONSTRAINT audit_events_message_length CHECK (((char_length((message)::text) >= 1) AND (char_length((message)::text) <= 300))),
+    CONSTRAINT audit_events_metadata_object CHECK ((jsonb_typeof(metadata) = 'object'::text)),
+    CONSTRAINT audit_events_subject_name_length CHECK (((char_length((subject_name)::text) >= 1) AND (char_length((subject_name)::text) <= 254))),
+    CONSTRAINT audit_events_subject_type_length CHECK (((char_length((subject_type)::text) >= 1) AND (char_length((subject_type)::text) <= 100)))
+);
+
+
+--
+-- Name: audit_events_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.audit_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: audit_events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.audit_events_id_seq OWNED BY public.audit_events.id;
 
 
 --
@@ -537,6 +598,13 @@ ALTER SEQUENCE public.workspaces_id_seq OWNED BY public.workspaces.id;
 
 
 --
+-- Name: audit_events id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events ALTER COLUMN id SET DEFAULT nextval('public.audit_events_id_seq'::regclass);
+
+
+--
 -- Name: availability_windows id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -626,6 +694,14 @@ ALTER TABLE ONLY public.workspaces ALTER COLUMN id SET DEFAULT nextval('public.w
 
 ALTER TABLE ONLY public.ar_internal_metadata
     ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: audit_events audit_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT audit_events_pkey PRIMARY KEY (id);
 
 
 --
@@ -761,6 +837,48 @@ ALTER TABLE ONLY public.workspaces
 --
 
 CREATE INDEX index_active_schedule_blocks_on_workspace_and_start ON public.schedule_blocks USING btree (workspace_id, starts_at) WHERE active;
+
+
+--
+-- Name: index_audit_events_on_actor_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_actor_id ON public.audit_events USING btree (actor_id);
+
+
+--
+-- Name: index_audit_events_on_target_user_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_target_user_and_created_at ON public.audit_events USING btree (target_user_id, created_at);
+
+
+--
+-- Name: index_audit_events_on_target_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_target_user_id ON public.audit_events USING btree (target_user_id);
+
+
+--
+-- Name: index_audit_events_on_workspace_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_workspace_and_created_at ON public.audit_events USING btree (workspace_id, created_at);
+
+
+--
+-- Name: index_audit_events_on_workspace_category_and_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_workspace_category_and_created_at ON public.audit_events USING btree (workspace_id, category, created_at);
+
+
+--
+-- Name: index_audit_events_on_workspace_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_audit_events_on_workspace_id ON public.audit_events USING btree (workspace_id);
 
 
 --
@@ -1037,11 +1155,26 @@ CREATE INDEX index_workspace_invitations_on_workspace_id ON public.workspace_inv
 
 
 --
+-- Name: audit_events audit_events_immutable; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER audit_events_immutable BEFORE DELETE OR UPDATE ON public.audit_events FOR EACH ROW EXECUTE FUNCTION public.prevent_audit_event_mutation();
+
+
+--
 -- Name: reservation_series fk_rails_04579ab441; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.reservation_series
     ADD CONSTRAINT fk_rails_04579ab441 FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: audit_events fk_rails_0e30d7a4ad; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT fk_rails_0e30d7a4ad FOREIGN KEY (target_user_id) REFERENCES public.users(id);
 
 
 --
@@ -1197,6 +1330,22 @@ ALTER TABLE ONLY public.reservation_reminders
 
 
 --
+-- Name: audit_events fk_rails_cdb00c0cbd; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT fk_rails_cdb00c0cbd FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id);
+
+
+--
+-- Name: audit_events fk_rails_dd1f3a471a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_events
+    ADD CONSTRAINT fk_rails_dd1f3a471a FOREIGN KEY (actor_id) REFERENCES public.users(id);
+
+
+--
 -- Name: blackout_periods fk_rails_e347c4f19c; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1227,6 +1376,7 @@ ALTER TABLE ONLY public.schedule_blocks
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260803002000'),
 ('20260802214000'),
 ('20260802171000'),
 ('20260801212500'),
