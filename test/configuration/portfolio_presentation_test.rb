@@ -15,6 +15,7 @@ class PortfolioPresentationTest < ActiveSupport::TestCase
     dockerfile = Rails.root
       .join(".devcontainer/Dockerfile")
       .read
+    features = configuration.fetch("features")
 
     assert_equal "app", configuration.fetch("service")
     assert_includes configuration.fetch("forwardPorts"), 3000
@@ -24,7 +25,11 @@ class PortfolioPresentationTest < ActiveSupport::TestCase
     assert_equal "postgres:17",
       compose.dig("services", "db", "image")
     assert_includes dockerfile,
-      "mcr.microsoft.com/devcontainers/ruby:4-bookworm"
+      "mcr.microsoft.com/devcontainers/base:bookworm"
+    assert_equal(
+      { "version" => "4.0.6" },
+      features.fetch("ghcr.io/devcontainers/features/ruby:2")
+    )
   end
 
   test "README presents the on-demand Codespaces demo honestly" do
@@ -39,6 +44,7 @@ class PortfolioPresentationTest < ActiveSupport::TestCase
     refute_includes readme, "onrender.com"
     refute_includes readme, "demo@slotguard.app"
   end
+
   test "Codespaces includes SSH support for CLI maintenance" do
     configuration = JSON.parse(
       Rails.root

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/ruby:4-bookworm
+FROM mcr.microsoft.com/devcontainers/base:bookworm
 
 USER root
 
