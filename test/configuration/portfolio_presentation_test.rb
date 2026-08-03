@@ -39,4 +39,15 @@ class PortfolioPresentationTest < ActiveSupport::TestCase
     refute_includes readme, "onrender.com"
     refute_includes readme, "demo@slotguard.app"
   end
+  test "Codespaces includes SSH support for CLI maintenance" do
+    configuration = JSON.parse(
+      Rails.root
+        .join(".devcontainer/devcontainer.json")
+        .read
+    )
+
+    assert configuration
+      .fetch("features")
+      .key?("ghcr.io/devcontainers/features/sshd:1")
+  end
 end

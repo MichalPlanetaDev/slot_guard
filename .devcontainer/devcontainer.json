@@ -3,7 +3,9 @@
   "dockerComposeFile": "compose.yaml",
   "service": "app",
   "workspaceFolder": "/workspaces/slot_guard",
-  "forwardPorts": [3000],
+  "forwardPorts": [
+    3000
+  ],
   "portsAttributes": {
     "3000": {
       "label": "SlotGuard",
@@ -12,5 +14,10 @@
   },
   "postCreateCommand": "bundle install && bin/rails db:prepare && bin/rails tailwindcss:build",
   "postStartCommand": "rm -f tmp/pids/server.pid && nohup bin/rails server -b 0.0.0.0 > /tmp/slotguard.log 2>&1 &",
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest"
+    }
+  }
 }
