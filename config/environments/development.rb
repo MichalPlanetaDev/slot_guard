@@ -15,6 +15,11 @@ Rails.application.configure do
   # Enable server timing.
   config.server_timing = true
 
+  if ENV["CODESPACES"] == "true"
+    # Restrict forwarded development traffic to GitHub Codespaces port 3000.
+    config.hosts << /\A[a-z0-9-]+-3000\.app\.github\.dev\z/
+  end
+
   # Enable/disable Action Controller caching. By default Action Controller caching is disabled.
   # Run rails dev:cache to toggle Action Controller caching.
   if Rails.root.join("tmp/caching-dev.txt").exist?

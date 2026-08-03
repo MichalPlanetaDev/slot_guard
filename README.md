@@ -6,7 +6,13 @@
 
 SlotGuard is a Rails application for booking shared rooms and equipment without double reservations. PostgreSQL exclusion constraints protect concurrent bookings and blackout periods, while workspace-local time zones, recurring reservations, inherited booking policies, reminders, and an immutable activity log cover the complete scheduling workflow.
 
-Owners manage workspaces, members, resources, availability, booking policies, and blackout periods. Members create one-off or recurring reservations, receive notifications, and can review the activity visible to their role.
+Owners manage workspaces, members, resources, availability, booking policies, and blackout periods. Members create one-off or recurring reservations, receive notifications, and review the activity visible to their role.
+
+## GitHub Codespaces
+
+The badge opens a private, on-demand development copy of SlotGuard using GitHub Codespaces. PostgreSQL is created with the workspace, dependencies and the database are prepared automatically, and the application opens on forwarded port 3000. Create an account in the application to explore the workflow.
+
+A codespace is a temporary development environment rather than an always-on public deployment. It stops when idle and starts again when its owner resumes it.
 
 ## Local setup
 
