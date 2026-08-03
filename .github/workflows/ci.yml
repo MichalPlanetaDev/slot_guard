@@ -41,6 +41,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Install libvips
+        run: |
+          sudo apt-get update -qq
+          if apt-cache show libvips42t64 >/dev/null 2>&1; then
+            sudo apt-get install --no-install-recommends -y libvips42t64
+          else
+            sudo apt-get install --no-install-recommends -y libvips42
+          fi
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
