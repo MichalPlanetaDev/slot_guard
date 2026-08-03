@@ -1,16 +1,13 @@
 # SlotGuard
 
-SlotGuard is a Rails application for booking shared rooms and equipment without double reservations.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-open-059669?style=for-the-badge)](https://slotguard-michalplanetadev.onrender.com)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/MichalPlanetaDev/slot_guard?quickstart=1)
 
-Workspaces keep their own members, roles, resources, weekly availability, and IANA time zone. Members enter local dates and times while the database stores reservation instants in UTC and rejects daylight-saving gaps or ambiguous local times. PostgreSQL exclusion constraints protect the shared schedule during concurrent requests.
+![SlotGuard workspace preview](public/slotguard-preview.svg)
 
-Reservations can be created once or as a recurring series. Series creation is atomic, so one unavailable occurrence rejects the complete set. A reservation can be cancelled alone or together with later occurrences. Confirmation, cancellation, and optional reminder emails are delivered through Active Job and Solid Queue.
+SlotGuard is a Rails application for booking shared rooms and equipment without double reservations. PostgreSQL exclusion constraints protect concurrent bookings and blackout periods, while workspace-local time zones, recurring reservations, inherited booking policies, reminders, and an immutable activity log cover the complete scheduling workflow.
 
-Owners and managers can close individual resources for maintenance or temporary unavailability. Owners can also close the complete workspace. Timed and all-day blackout periods share the same database schedule ledger as reservations, so an overlap cannot be committed. Existing confirmed reservations must be cancelled before a conflicting blackout is added.
-
-Owners set workspace defaults for booking notice, advance booking, reservation duration, and cancellation cutoff. A resource can override any setting independently while inheriting the remaining workspace policy. Every occurrence in a recurring series is checked against the effective resource policy.
-
-Important reservation, blackout, resource, invitation, membership, and policy actions are written to an immutable workspace activity log. Owners see the complete history, managers see scheduling and resource activity, and members see events for their own reservations.
+The public demo uses a resettable sample workspace. Sign in with `demo@slotguard.app` and `SlotGuard-demo-2026!`. Outbound email is disabled in demo mode. A free Render service can take about a minute to wake after inactivity.
 
 ## Local setup
 
@@ -28,8 +25,6 @@ Open `http://localhost:3000`. Development mail is written to `tmp/mail`.
 
     bin/check
 
-The check runs formatting, security and dependency audits, database preparation, tests, and production asset compilation.
-
 ## Configuration
 
-Hosted environments must provide `DATABASE_URL`, `RAILS_MASTER_KEY`, `MAIL_FROM`, the public host settings, and an Action Mailer delivery service. Solid Queue must run with the application, and the database role must be able to install the trusted `btree_gist` extension during migration.
+Production requires `DATABASE_URL`, `RAILS_MASTER_KEY`, `APP_HOST`, and `MAIL_FROM`. Set `SOLID_QUEUE_IN_PUMA=true` for a single-service deployment. The PostgreSQL role must be able to install the trusted `btree_gist` extension.
