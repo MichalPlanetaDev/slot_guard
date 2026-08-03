@@ -1,1 +1,1 @@
-Demo::Reset.call if ENV["DEMO_MODE"] == "true"
+# Add idempotent application seed data here when it is required.
