@@ -4,19 +4,17 @@
 
 ![SlotGuard workspace preview](public/slotguard-preview.svg)
 
-SlotGuard is a Rails application for booking shared rooms and equipment without double reservations. PostgreSQL exclusion constraints protect concurrent bookings and blackout periods, while workspace-local time zones, recurring reservations, inherited booking policies, reminders, and an immutable activity log cover the complete scheduling workflow.
+SlotGuard is a Rails application for booking shared rooms and equipment without double-booking them.
 
-Owners manage workspaces, members, resources, availability, booking policies, and blackout periods. Members create one-off or recurring reservations, receive notifications, and review the activity visible to their role.
+Each workspace has its own members, resources, availability, booking policies, blackout periods, recurring reservations, reminders, and activity history. PostgreSQL protects the schedule at database level, so concurrent requests cannot reserve the same resource at the same time.
 
-## GitHub Codespaces
+## Try it
 
-The badge opens a private, on-demand development copy of SlotGuard using GitHub Codespaces. PostgreSQL is created with the workspace, dependencies and the database are prepared automatically, and the application opens on forwarded port 3000. Create an account in the application to explore the workflow.
+Open the GitHub Codespaces link above to launch a private browser-based copy of the project. Ruby, PostgreSQL, dependencies, and the database are prepared automatically. SlotGuard runs on forwarded port `3001`.
 
-A codespace is a temporary development environment rather than an always-on public deployment. It stops when idle and starts again when its owner resumes it.
+A GitHub account is required. Codespaces are temporary development environments and stop when left inactive.
 
 ## Local setup
-
-SlotGuard expects Ruby, PostgreSQL, and the versions recorded in `.ruby-version`, `.mise.toml`, and `Gemfile.lock`.
 
     sudo service postgresql start
     mise install
@@ -24,14 +22,12 @@ SlotGuard expects Ruby, PostgreSQL, and the versions recorded in `.ruby-version`
     bin/rails db:prepare
     bin/dev
 
-Open `http://localhost:3000`. Development mail is written to `tmp/mail`.
+Open `http://localhost:3000`. Development emails are written to `tmp/mail`.
 
 ## Configuration
 
-Local development uses PostgreSQL. A production environment must provide `DATABASE_URL`, `RAILS_MASTER_KEY`, `APP_HOST`, and `MAIL_FROM`. Set `SOLID_QUEUE_IN_PUMA=true` when jobs run inside the web process.
+Production requires `DATABASE_URL`, `RAILS_MASTER_KEY`, `APP_HOST`, and `MAIL_FROM`. Set `SOLID_QUEUE_IN_PUMA=true` when background jobs run in the web process.
 
 ## Verification
 
     bin/check
-
-The check runs style, security, dependency, database, test, and production asset verification.

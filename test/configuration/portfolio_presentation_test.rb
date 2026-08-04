@@ -18,7 +18,7 @@ class PortfolioPresentationTest < ActiveSupport::TestCase
     features = configuration.fetch("features")
 
     assert_equal "app", configuration.fetch("service")
-    assert_includes configuration.fetch("forwardPorts"), 3000
+    assert_includes configuration.fetch("forwardPorts"), 3001
     assert_includes configuration.fetch("postStartCommand"),
       "bin/rails server -b 0.0.0.0"
     assert compose.fetch("services").key?("db")
