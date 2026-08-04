@@ -56,4 +56,12 @@ class PortfolioPresentationTest < ActiveSupport::TestCase
       .fetch("features")
       .key?("ghcr.io/devcontainers/features/sshd:1")
   end
+  test "Codespaces allows forwarded application ports" do
+    development_configuration = Rails.root
+      .join("config/environments/development.rb")
+      .read
+
+    assert_includes development_configuration,
+      'config.hosts << /\A[a-z0-9-]+-\d+\.app\.github\.dev\z/'
+  end
 end
