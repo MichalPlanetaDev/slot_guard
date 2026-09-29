@@ -228,6 +228,8 @@ class ReservationSeries < ApplicationRecord
       (first_local_start.hour * 60) + first_local_start.min
     end_minute =
       (first_local_end.hour * 60) + first_local_end.min
+    end_date_offset =
+      (first_local_end.to_date - first_local_start.to_date).to_i
 
     (1..occurrence_count).map do |number|
       date = first_local_start.to_date +
@@ -239,7 +241,7 @@ class ReservationSeries < ApplicationRecord
           start_minute
         )
         ends_at = workspace.local_time_at(
-          date,
+          date + end_date_offset,
           end_minute
         )
       rescue Workspace::InvalidLocalTime => error

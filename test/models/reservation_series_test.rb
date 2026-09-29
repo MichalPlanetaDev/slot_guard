@@ -194,6 +194,45 @@ test "rolls back every occurrence inside a joinable outer transaction" do
   end
 end
 
+  test "a recurring reservation may end at local midnight" do
+    travel_to Time.utc(2026, 8, 1, 12, 0) do
+      workspace, member, resource = series_context(
+        weekday: 1,
+        starts_minute: 23 * 60,
+        ends_minute: 24 * 60
+      )
+      series = build_reservation_series(
+        shared_resource: resource,
+        user: member,
+        first_starts_at: workspace.parse_local_datetime(
+          "2026-08-03T23:00"
+        ),
+        first_ends_at: workspace.parse_local_datetime(
+          "2026-08-04T00:00"
+        ),
+        occurrence_count: 2
+      )
+
+      assert series.save_with_occurrences,
+        series.errors.full_messages.to_sentence
+
+      assert_equal(
+        [
+          Time.utc(2026, 8, 3, 23, 0),
+          Time.utc(2026, 8, 10, 23, 0)
+        ],
+        series.reservations.pluck(:starts_at)
+      )
+      assert_equal(
+        [
+          Time.utc(2026, 8, 4, 0, 0),
+          Time.utc(2026, 8, 11, 0, 0)
+        ],
+        series.reservations.pluck(:ends_at)
+      )
+    end
+  end
+
   private
 
   def series_context(
