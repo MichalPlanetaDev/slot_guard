@@ -88,4 +88,65 @@ class ReservationSeriesControllerTest <
       assert_response :not_found
     end
   end
+
+  test "creates recurring reservations that end at local midnight" do
+    travel_to Time.utc(2026, 8, 1, 12, 0) do
+      workspace = create_workspace
+      workspace.update!(time_zone: "Europe/Warsaw")
+      member = create_user(
+        workspace: workspace,
+        role: :member
+      )
+      resource = create_shared_resource(workspace: workspace)
+
+      create_availability_window(
+        shared_resource: resource,
+        weekday: 1,
+        starts_minute: 23 * 60,
+        ends_minute: 24 * 60
+      )
+
+      sign_in_as member
+
+      assert_difference("ReservationSeries.count", 1) do
+        assert_difference("Reservation.count", 2) do
+          post reservation_series_collection_path, params: {
+            reservation_series: {
+              shared_resource_id: resource.id,
+              purpose: "Late equipment slot",
+              first_starts_at: "2026-08-03T23:00",
+              first_ends_at: "2026-08-04T00:00",
+              interval_weeks: 1,
+              occurrence_count: 2,
+              reminder_minutes: ""
+            }
+          }
+        end
+      end
+
+      series = ReservationSeries.order(:id).last
+
+      assert_response :see_other
+
+      assert_equal(
+        [
+          "2026-08-03T23:00",
+          "2026-08-10T23:00"
+        ],
+        series.reservations.map { |reservation|
+          workspace.local_datetime_value(reservation.starts_at)
+        }
+      )
+
+      assert_equal(
+        [
+          "2026-08-04T00:00",
+          "2026-08-11T00:00"
+        ],
+        series.reservations.map { |reservation|
+          workspace.local_datetime_value(reservation.ends_at)
+        }
+      )
+    end
+  end
 end
